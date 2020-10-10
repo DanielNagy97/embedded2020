@@ -1,0 +1,10 @@
+main.c:81:6:write_byte	24	static
+main.c:90:6:write_max_cmd	24	static
+main.c:100:6:max_clear	16	static
+main.c:106:6:max_init	16	static
+main.c:116:6:set_byte_on_matrix	32	static
+main.c:134:6:display_character	24	static
+main.c:146:5:main	24	static
+main.c:195:6:SystemClock_Config	72	static
+main.c:234:13:MX_GPIO_Init	32	static
+main.c:262:6:Error_Handler	4	static
