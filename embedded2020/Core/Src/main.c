@@ -35,13 +35,13 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define maxport GPIOA
-#define data_Pin GPIO_PIN_7
-#define cs_Pin GPIO_PIN_6
-#define clock_Pin GPIO_PIN_5
+#define MAXPORT GPIOA
+#define DATA_PIN GPIO_PIN_7
+#define CS_PIN GPIO_PIN_6
+#define CLOCK_PIN GPIO_PIN_5
 
 // Number of dot matrix
-#define num 4
+#define NUMBER_OF_CELLS 4
 
 /* USER CODE END PD */
 
@@ -66,35 +66,36 @@ static void MX_GPIO_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 uint8_t numbers[10][8]={
-{0x1e,0x33,0x37,0x3b,0x33,0x33,0x1e,0x0},//0
-{0xe,0x1e,0x6,0x6,0x6,0x6,0x6,0x0},//1
-{0x1e,0x33,0x3,0x1f,0x30,0x33,0x3f,0x0},//2
-{0x1e,0x33,0x3,0xf,0x3,0x33,0x1e,0x0},//3
-{0x6,0xe,0x16,0x26,0x3f,0x6,0x6,0x0},//4
-{0x3f,0x30,0x3e,0x33,0x3,0x33,0x1e,0x0},//5
-{0x1e,0x33,0x30,0x3f,0x33,0x33,0x1e,0x0},//6
-{0x3f,0x23,0x3,0x6,0x6,0xc,0xc,0x0},//7
-{0x1e,0x33,0x33,0x1e,0x33,0x33,0x1e,0x0},//8
-{0x1e,0x33,0x33,0x1f,0x3,0x33,0x1e,0x0},//9
+{0x1e, 0x33, 0x37, 0x3b, 0x33, 0x33, 0x1e, 0x0},//0
+{0xe,  0x1e, 0x6,  0x6,  0x6,  0x6,  0x6,  0x0},//1
+{0x1e, 0x33, 0x3,  0x1f, 0x30, 0x33, 0x3f, 0x0},//2
+{0x1e, 0x33, 0x3,  0xf,  0x3,  0x33, 0x1e, 0x0},//3
+{0x6,  0xe,  0x16, 0x26, 0x3f, 0x6,  0x6,  0x0},//4
+{0x3f, 0x30, 0x3e, 0x33, 0x3,  0x33, 0x1e, 0x0},//5
+{0x1e, 0x33, 0x30, 0x3f, 0x33, 0x33, 0x1e, 0x0},//6
+{0x3f, 0x23, 0x3,  0x6,  0x6,  0xc,  0xc,  0x0},//7
+{0x1e, 0x33, 0x33, 0x1e, 0x33, 0x33, 0x1e, 0x0},//8
+{0x1e, 0x33, 0x33, 0x1f, 0x3,  0x33, 0x1e, 0x0},//9
 };
+
 
 void write_byte (uint8_t byte){
 	for (int i = 0; i<8; i++){
-		HAL_GPIO_WritePin (maxport, clock_Pin, 0);
-		HAL_GPIO_WritePin (maxport, data_Pin, byte&0x80);  // most significant bit
+		HAL_GPIO_WritePin (MAXPORT, CLOCK_PIN, 0);
+		HAL_GPIO_WritePin (MAXPORT, DATA_PIN, byte&0x80);  // most significant bit
 		byte = byte<<1;  // shift left
-		HAL_GPIO_WritePin (maxport, clock_Pin, 1);
+		HAL_GPIO_WritePin (MAXPORT, CLOCK_PIN, 1);
 	}
 }
 
 void write_max_cmd (uint8_t address, uint8_t cmd){
-	HAL_GPIO_WritePin (maxport, cs_Pin, 0);
-	for (int i = 0; i<num; i++){
+	HAL_GPIO_WritePin (MAXPORT, CS_PIN, 0);
+	for (int i = 0; i<NUMBER_OF_CELLS; i++){
 		write_byte (address);
 		write_byte (cmd);
 	}
-	HAL_GPIO_WritePin (maxport, cs_Pin, 0);
-	HAL_GPIO_WritePin (maxport, cs_Pin, 1);
+	HAL_GPIO_WritePin (MAXPORT, CS_PIN, 0);
+	HAL_GPIO_WritePin (MAXPORT, CS_PIN, 1);
 }
 
 void max_clear(){
@@ -115,9 +116,9 @@ void max_init (uint8_t brightness){
 
 void set_byte_on_matrix(uint8_t byte, uint8_t row, uint8_t col, uint8_t shift){
 	//Setting one byte on the 8 rows 4 columns matrix
-	HAL_GPIO_WritePin (maxport, cs_Pin, 0);
+	HAL_GPIO_WritePin (MAXPORT, CS_PIN, 0);
 
-	for (int i = 0; i<num; i++){
+	for (int i = 0; i<NUMBER_OF_CELLS; i++){
 		if(i == col){
 			write_byte (row);
 			write_byte (byte << shift);
@@ -127,13 +128,55 @@ void set_byte_on_matrix(uint8_t byte, uint8_t row, uint8_t col, uint8_t shift){
 			write_byte (0);
 		}
 	}
-	HAL_GPIO_WritePin (maxport, cs_Pin, 0);
-	HAL_GPIO_WritePin (maxport, cs_Pin, 1);
+	HAL_GPIO_WritePin (MAXPORT, CS_PIN, 0);
+	HAL_GPIO_WritePin (MAXPORT, CS_PIN, 1);
 }
 
+//Displaying a character in a specified cell
 void display_character(uint8_t* character, uint8_t column, uint8_t shift){
 	for(int j = 0; j<8; j++){
 		set_byte_on_matrix(character[j], j+1, column, shift);
+	}
+}
+
+uint8_t screen_buffer[8][NUMBER_OF_CELLS];
+
+void screen_buffer_init(){
+	for(int i = 0; i<8; i++){
+		for(int j = 0; j<NUMBER_OF_CELLS; j++){
+			screen_buffer[i][j] = 0x0;
+		}
+	}
+}
+
+void display_buffer(){
+	for(int i = 0; i<NUMBER_OF_CELLS; i++){
+		for(int j = 0; j<8; j++){
+			set_byte_on_matrix(screen_buffer[j][i], j+1, i, 0);
+		}
+	}
+}
+
+void scroll_character(uint8_t* character, uint8_t speed){
+	for(int k = 0; k<=NUMBER_OF_CELLS; k++){
+		for(int i = 0; i<8; i++){
+			for(int j = 0; j<8; j++){
+				switch (k) {
+					case 0:
+						screen_buffer[j][k] = character[j] << 8 >> i;
+						break;
+					case NUMBER_OF_CELLS:
+						screen_buffer[j][k-1] = character[j] >> i;
+						break;
+					default:
+						screen_buffer[j][k] = character[j] << 8 >> i;
+						screen_buffer[j][k-1] = character[j] >> i;
+						break;
+				}
+			}
+			display_buffer();
+			HAL_Delay(speed);
+		}
 	}
 }
 
@@ -169,6 +212,8 @@ int main(void)
   MX_GPIO_Init();
   /* USER CODE BEGIN 2 */
   max_init(0x01);
+  screen_buffer_init();
+
   srand(time(NULL));
 
   /* USER CODE END 2 */
@@ -180,10 +225,9 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  for(int i = 0; i<4; i++){
-		  display_character(numbers[rand() % 10], i, 1);
-	  }
-	  HAL_Delay(1000);
+
+	  scroll_character(numbers[rand() % 10], 20);
+
   }
   /* USER CODE END 3 */
 }
