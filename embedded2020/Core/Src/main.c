@@ -139,20 +139,13 @@ void display_character(uint8_t* character, uint8_t column, uint8_t shift){
 	}
 }
 
-uint8_t screen_buffer[8][NUMBER_OF_CELLS];
+uint8_t screen_buffer[NUMBER_OF_CELLS][8] = {0};
 
-void screen_buffer_init(){
-	for(int i = 0; i<8; i++){
-		for(int j = 0; j<NUMBER_OF_CELLS; j++){
-			screen_buffer[i][j] = 0x0;
-		}
-	}
-}
 
 void display_buffer(){
 	for(int i = 0; i<NUMBER_OF_CELLS; i++){
 		for(int j = 0; j<8; j++){
-			set_byte_on_matrix(screen_buffer[j][i], j+1, i, 0);
+			set_byte_on_matrix(screen_buffer[i][j], j+1, i, 0);
 		}
 	}
 }
@@ -178,6 +171,34 @@ void scroll_character(uint8_t* character, uint8_t speed){
 			HAL_Delay(speed);
 		}
 	}
+}
+
+//ez mehetne mindig egy lépést...
+void scroll_screen_buffer(){
+	for(int k = NUMBER_OF_CELLS; k>=0; k--){
+		for(int j = 0; j<8; j++){
+			screen_buffer[k][j] = screen_buffer[k][j] >> 1 | (screen_buffer[k-1][j] & 0x1) << 7;
+		}
+	}
+}
+
+
+//Egy 8*8-as byte tömb inputtal
+void input_screen_buffer(uint8_t* character){
+	//for(int k = 0; k<5; k++){
+		for(int j = 0; j<8; j++){
+			for(int i = 0; i<8; i++){
+				screen_buffer[0][i] = character[i] << 8 >> j;
+			}
+			display_buffer();
+			HAL_Delay(80);
+		}
+		for(int j = 0; j<8; j++){
+			scroll_screen_buffer();
+			display_buffer();
+			HAL_Delay(80);
+		}
+
 }
 
 /* USER CODE END 0 */
@@ -211,8 +232,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   /* USER CODE BEGIN 2 */
-  max_init(0x01);
-  screen_buffer_init();
+  max_init(0x02);
 
   srand(time(NULL));
 
@@ -226,7 +246,9 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	  scroll_character(numbers[rand() % 10], 20);
+	  //scroll_character(numbers[rand() % 10], 200);
+
+	  input_screen_buffer(numbers[rand() % 10]);
 
   }
   /* USER CODE END 3 */
