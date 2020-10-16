@@ -1,12 +1,48 @@
-/*
- * max_display.h
- *
- *  Created on: 16 Oct 2020
- *      Author: Daniel Nagy
+/****************************************************************************
+ * Copyright (C) 2020 by Daniel Nagy                                        *
+ ****************************************************************************/
+
+/**
+ * @file max_display.h
+ * @author Daniel Nagy
+ * @date 16 Oct 2020
+ * @brief Header file of the max_display.c
+ * @see https://github.com/DanielNagy97/embedded2020
  */
+
+#include "main.h"
+#include <time.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
 #ifndef INC_MAX_DISPLAY_H_
 #define INC_MAX_DISPLAY_H_
 
+#define MAXPORT GPIOA
+#define DATA_PIN GPIO_PIN_7
+#define CS_PIN GPIO_PIN_6
+#define CLOCK_PIN GPIO_PIN_5
+#define NUMBER_OF_CELLS 4
+
+void write_byte (uint8_t byte);
+
+void write_max_cmd (uint8_t address, uint8_t cmd);
+
+void max_clear();
+
+void max_init (uint8_t brightness);
+
+void set_byte_on_matrix(uint8_t byte, uint8_t row, uint8_t column);
+
+void display_character(uint8_t* character, uint8_t cell);
+
+void display_screen_buffer();
+
+void shift_screen_buffer_right();
+
+void shift_screen_buffer_left();
+
+void scroll_text_left(char* text, uint16_t speed, uint8_t blank_space);
 
 #endif /* INC_MAX_DISPLAY_H_ */

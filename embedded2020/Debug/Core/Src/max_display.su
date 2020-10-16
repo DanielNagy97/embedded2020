@@ -1,0 +1,10 @@
+max_display.c:30:6:write_byte	24	static
+max_display.c:44:6:write_max_cmd	24	static
+max_display.c:60:6:max_clear	16	static
+max_display.c:71:6:max_init	16	static
+max_display.c:85:6:set_byte_on_matrix	24	static
+max_display.c:109:6:display_character	24	static
+max_display.c:121:6:display_screen_buffer	16	static
+max_display.c:134:6:shift_screen_buffer_right	16	static
+max_display.c:149:6:shift_screen_buffer_left	16	static
+max_display.c:164:6:scroll_text_left	32	static
