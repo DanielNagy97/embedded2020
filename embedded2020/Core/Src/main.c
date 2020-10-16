@@ -25,6 +25,10 @@
 /* USER CODE BEGIN Includes */
 #include <time.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#include <max_display.h>
 
 /* USER CODE END Includes */
 
@@ -35,14 +39,13 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+//Ezek mehetnének egy structba!
 #define MAXPORT GPIOA
 #define DATA_PIN GPIO_PIN_7
 #define CS_PIN GPIO_PIN_6
 #define CLOCK_PIN GPIO_PIN_5
 
-// Number of dot matrix
 #define NUMBER_OF_CELLS 4
-
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -142,7 +145,7 @@ void display_character(uint8_t* character, uint8_t column, uint8_t shift){
 uint8_t screen_buffer[NUMBER_OF_CELLS][8] = {0};
 
 
-void display_buffer(){
+void display_screen_buffer(){
 	for(int i = 0; i<NUMBER_OF_CELLS; i++){
 		for(int j = 0; j<8; j++){
 			set_byte_on_matrix(screen_buffer[i][j], j+1, i, 0);
@@ -150,56 +153,85 @@ void display_buffer(){
 	}
 }
 
-void scroll_character(uint8_t* character, uint8_t speed){
-	for(int k = 0; k<=NUMBER_OF_CELLS; k++){
-		for(int i = 0; i<8; i++){
-			for(int j = 0; j<8; j++){
-				switch (k) {
-					case 0:
-						screen_buffer[j][k] = character[j] << 8 >> i;
-						break;
-					case NUMBER_OF_CELLS:
-						screen_buffer[j][k-1] = character[j] >> i;
-						break;
-					default:
-						screen_buffer[j][k] = character[j] << 8 >> i;
-						screen_buffer[j][k-1] = character[j] >> i;
-						break;
-				}
-			}
-			display_buffer();
-			HAL_Delay(speed);
-		}
-	}
-}
 
-//ez mehetne mindig egy lépést...
-void scroll_screen_buffer(){
+void shift_screen_buffer_right(){
 	for(int k = NUMBER_OF_CELLS; k>=0; k--){
 		for(int j = 0; j<8; j++){
-			screen_buffer[k][j] = screen_buffer[k][j] >> 1 | (screen_buffer[k-1][j] & 0x1) << 7;
+			screen_buffer[k][j] = screen_buffer[k][j] >> 1
+								  	  | (screen_buffer[k-1][j] & 0x1) << 7;
+		}
+	}
+}
+
+void shift_screen_buffer_left(){
+	for(int k = 0; k<NUMBER_OF_CELLS; k++){
+		for(int j = 0; j<8; j++){
+			screen_buffer[k][j] = screen_buffer[k][j] << 1
+								  	  | (screen_buffer[k+1][j] & 0x80) >> 7;
 		}
 	}
 }
 
 
-//Egy 8*8-as byte tömb inputtal
-void input_screen_buffer(uint8_t* character){
+//These are useless
+void input_screen_buffer_right(uint8_t* character){
 	//for(int k = 0; k<5; k++){
 		for(int j = 0; j<8; j++){
 			for(int i = 0; i<8; i++){
 				screen_buffer[0][i] = character[i] << 8 >> j;
 			}
-			display_buffer();
+			display_screen_buffer();
 			HAL_Delay(80);
 		}
 		for(int j = 0; j<8; j++){
-			scroll_screen_buffer();
-			display_buffer();
+			shift_screen_buffer_right();
+			display_screen_buffer();
+			HAL_Delay(80);
+		}
+}
+
+void input_screen_buffer_left(char* mytext){
+	for(int k = 0; k<strlen(mytext); k++){
+		for(int j = 0; j<=8; j++){
+			for(int i = 0; i<8; i++){
+				screen_buffer[3][i] = numbers[mytext[k]-0x30][i] << j >> 8;
+			}
+			display_screen_buffer();
 			HAL_Delay(80);
 		}
 
+		for(int j = 0; j<8; j++){
+			shift_screen_buffer_left();
+			display_screen_buffer();
+			HAL_Delay(80);
+		}
+	}
 }
+
+
+void scroll_text_left(char* mytext, uint16_t speed, uint8_t blank_space){
+	for(int k = 0; k<strlen(mytext); k++){
+		//mivel visszafele nezzuk
+		for(int j = 7; j>=0; j--){
+			shift_screen_buffer_left();
+			for(int i = 0; i<8; i++){
+				// n k-adik bitje: (n & ( 1 << k )) >> k
+				screen_buffer[3][i] =
+				    screen_buffer[3][i]
+					    | (numbers[mytext[k]-0x30][i] & ( 1 << j )) >> j;
+			}
+			display_screen_buffer();
+			HAL_Delay(speed);
+		}
+	}
+	//making blank space after the text
+	for(int i = 0; i<blank_space; i++){
+		shift_screen_buffer_left();
+		display_screen_buffer();
+		HAL_Delay(speed);
+	}
+}
+
 
 /* USER CODE END 0 */
 
@@ -232,9 +264,11 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   /* USER CODE BEGIN 2 */
-  max_init(0x02);
+  max_init(0x01);
 
   srand(time(NULL));
+
+  char text_buffer[80] = {0};
 
   /* USER CODE END 2 */
 
@@ -245,10 +279,10 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  sprintf(text_buffer, "%d", rand() % 100);
+	  scroll_text_left(text_buffer, 40, 6);
 
 	  //scroll_character(numbers[rand() % 10], 200);
-
-	  input_screen_buffer(numbers[rand() % 10]);
 
   }
   /* USER CODE END 3 */
