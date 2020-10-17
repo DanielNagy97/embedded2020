@@ -112,7 +112,7 @@ int main(void)
 		sprintf(str, "%d, %d", eze[1], strlen(eze));
 		scroll_text_left(str, 20, 4);
 */
-	  scroll_text_left("Zámbó Jimmy a király <3 #mégnemveszíthetek", 40, 16);
+	  scroll_text_left("Zámbó Jimmy a király <3 #mégnemveszíthetek", 30, 16);
   }
   /* USER CODE END 3 */
 }
