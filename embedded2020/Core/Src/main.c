@@ -93,7 +93,7 @@ int main(void)
   max_init(0x01);
   srand(time(NULL));
 
-  char text_buffer[80] = {0};
+  //char text_buffer[80] = {0};
 
   /* USER CODE END 2 */
 
@@ -104,8 +104,15 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  sprintf(text_buffer, "%d", rand() % 100);
-	  scroll_text_left(text_buffer, 40, 6);
+	  //sprintf(text_buffer, "%d", rand() % 100);
+
+/*
+	  	char* eze = "Ű";
+		char str[20];
+		sprintf(str, "%d, %d", eze[1], strlen(eze));
+		scroll_text_left(str, 20, 4);
+*/
+	  scroll_text_left("Árvíztűrő tükörfúrógép", 40, 12);
   }
   /* USER CODE END 3 */
 }

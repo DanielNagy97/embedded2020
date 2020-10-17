@@ -25,6 +25,7 @@
 #define CLOCK_PIN GPIO_PIN_5
 #define NUMBER_OF_CELLS 4
 
+
 void write_byte (uint8_t byte);
 
 void write_max_cmd (uint8_t address, uint8_t cmd);
@@ -42,6 +43,8 @@ void display_screen_buffer();
 void shift_screen_buffer_right();
 
 void shift_screen_buffer_left();
+
+uint8_t get_character(int code, uint8_t i);
 
 void scroll_text_left(char* text, uint16_t speed, uint8_t blank_space);
 
