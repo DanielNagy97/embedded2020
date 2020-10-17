@@ -1,4 +1,4 @@
-fp = open('Fonts.txt', 'r')
+fp = open('Fonts-with-width.txt', 'r')
 out = open('Output.txt', 'a')
 
 while(1):
@@ -10,7 +10,7 @@ while(1):
         hex_form = hex(int(line[:-1],2))
         out.write(str(hex_form)+", ")
     else:
-        out.write(line)
+        out.write("//"+line)
 fp.close()
 out.close()
 

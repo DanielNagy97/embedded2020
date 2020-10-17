@@ -91,9 +91,9 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   max_init(0x01);
-  srand(time(NULL));
+  /* srand(time(NULL)); */
 
-  //char text_buffer[80] = {0};
+  /* char text_buffer[80] = {0}; */
 
   /* USER CODE END 2 */
 
@@ -112,7 +112,7 @@ int main(void)
 		sprintf(str, "%d, %d", eze[1], strlen(eze));
 		scroll_text_left(str, 20, 4);
 */
-	  scroll_text_left("Árvíztűrő tükörfúrógép", 40, 12);
+	  scroll_text_left("Zámbó Jimmy a király <3 #mégnemveszíthetek", 40, 16);
   }
   /* USER CODE END 3 */
 }
