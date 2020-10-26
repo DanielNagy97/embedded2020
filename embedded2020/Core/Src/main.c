@@ -44,6 +44,8 @@
 /* Private variables ---------------------------------------------------------*/
 RTC_HandleTypeDef hrtc;
 
+UART_HandleTypeDef huart1;
+
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -52,12 +54,29 @@ RTC_HandleTypeDef hrtc;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_RTC_Init(void);
+static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+/* buffers for uart */
+uint8_t uart_data[80] = {0};
+uint8_t uart_receive[80] = {0};
+
+void send_uart(char* text, uint32_t timeout){
+	  for(int i = 0; i<strlen(text); i++){
+		  uart_data[i] = (uint8_t)text[i];
+	  }
+	  HAL_UART_Transmit(&huart1, uart_data, strlen(text), timeout);
+}
+
+void get_uart(uint32_t timeout){
+	  HAL_UART_Receive(&huart1, uart_receive, 80, timeout);
+}
+
 
 /* USER CODE END 0 */
 
@@ -90,12 +109,15 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_RTC_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-
   max_init(0x01);
   /* srand(time(NULL)); */
 
   char text_buffer[80] = {0};
+  char text_buffer2[80] = {0};
+
+  /*
   char text_buffer2[80] = {0};
   RTC_TimeTypeDef currTime = {10, 12, 0};
   RTC_DateTypeDef currDate = {0, 10, 26, 20};
@@ -111,6 +133,27 @@ int main(void)
   sAlarm.Alarm = RTC_ALARM_A;
 
   HAL_RTC_SetAlarm_IT(&hrtc, &sAlarm, RTC_FORMAT_BIN);
+  */
+
+  send_uart("AT\r\n", 1000);
+  get_uart(1000);
+  HAL_Delay(1000);
+  send_uart("AT+CWMODE=1\r\n", 1000);
+  get_uart(1000);
+  sprintf(text_buffer2, "AT+CWJAP=\"%s\",\"%s\"\r\n", "<ssid>", "<password>");
+  send_uart(text_buffer2, 10000);
+  get_uart(10000);
+  get_uart(10000);
+  send_uart("AT+CIFSR\r\n", 1000);
+  get_uart(1000);
+  send_uart("AT+CIPMUX=1\r\n", 1000);
+  get_uart(1000);
+  send_uart("AT+CIPSERVER=1,80\r\n", 1000);
+  get_uart(1000);
+
+  /* sudo tcpdump host <ip-of-esp> -v */
+
+
 
   /* USER CODE END 2 */
 
@@ -121,6 +164,13 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+
+	  sprintf(text_buffer, "%s", (char*)uart_receive);
+	  scroll_text_left(text_buffer, 30, 6, 3);
+
+
+	  /*
 	  //Alarm interrupt
 	  if (old_minute != interrupt_counter){
 		  old_minute = interrupt_counter;
@@ -128,12 +178,15 @@ int main(void)
 		  sprintf(text_buffer2, "%d.%d.%d.", currDate.Year+2000, currDate.Month, currDate.Date);
 		  scroll_text_left(text_buffer2, 30, 16, 32);
 	  }
+
 	  HAL_RTC_GetTime(&hrtc, &currTime, RTC_FORMAT_BIN);
 	  sprintf(text_buffer, "%d%d", currTime.Hours, currTime.Minutes);
 	  show_clock_face(text_buffer,1);
 	  HAL_Delay(1000);
 	  show_clock_face(text_buffer, 0);
 	  HAL_Delay(1000);
+	  */
+
   }
   /* USER CODE END 3 */
 }
@@ -238,6 +291,39 @@ static void MX_RTC_Init(void)
   /* USER CODE BEGIN RTC_Init 2 */
 
   /* USER CODE END RTC_Init 2 */
+
+}
+
+/**
+  * @brief USART1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART1_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART1_Init 0 */
+
+  /* USER CODE END USART1_Init 0 */
+
+  /* USER CODE BEGIN USART1_Init 1 */
+
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 115200;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
+
+  /* USER CODE END USART1_Init 2 */
 
 }
 
