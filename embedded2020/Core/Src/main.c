@@ -63,8 +63,8 @@ static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN 0 */
 
 /* buffers for uart */
-uint8_t uart_data[80] = {0};
-uint8_t uart_receive[80] = {0};
+uint8_t uart_data[127] = {0};
+uint8_t uart_receive[127] = {0};
 
 void send_uart(char* text, uint32_t timeout){
 	  for(int i = 0; i<strlen(text); i++){
@@ -140,7 +140,7 @@ int main(void)
   HAL_Delay(1000);
   send_uart("AT+CWMODE=1\r\n", 1000);
   get_uart(1000);
-  sprintf(text_buffer2, "AT+CWJAP=\"%s\",\"%s\"\r\n", "<ssid>", "<password>");
+  sprintf(text_buffer2, "AT+CWJAP=\"%s\",\"%s\"\r\n", "<ssid>", "<pswd>");
   send_uart(text_buffer2, 10000);
   get_uart(10000);
   get_uart(10000);
@@ -151,9 +151,12 @@ int main(void)
   send_uart("AT+CIPSERVER=1,80\r\n", 1000);
   get_uart(1000);
 
+  //uint8_t link_id;
+
   /* sudo tcpdump host <ip-of-esp> -v */
 
-
+  sprintf(text_buffer, "%s", (char*)uart_receive);
+  scroll_text_left("eze", 20, 6, 3);
 
   /* USER CODE END 2 */
 
@@ -165,10 +168,40 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
+	  text_buffer[0] = '\0';
 
-	  sprintf(text_buffer, "%s", (char*)uart_receive);
-	  scroll_text_left(text_buffer, 30, 6, 3);
+	  get_uart(10000);
+	  /* Check if the request has +IPD in it*/
+	  char *pch = strstr((char*)uart_receive, "+IPD,");
+	  if(pch != NULL) {
+		  printf("%s\n", pch);
+	      pch = strtok(pch,",");
+	      pch = strtok(NULL,",");
+	      //link_id = (uint8_t)pch;
+	      int len = 122;
+	      char data[80];
+	      sprintf (data, "AT+CIPSEND=%s,%d\r\n", pch, len);
 
+	      send_uart(data, 1000);
+	      HAL_Delay(1000);
+	      /* Wait for > */
+	      //send_uart("HTTP/1.1 200 OK\nContent-Type: text/html\nConnection: close\n\n<!DOCTYPE HTML>\n<html>\n<body>\n<h1>Hello!</h1>\n</body>\n</html>\n\r\n", 3000);
+	      send_uart("HTTP/1.1 200 OK\n",1000);
+	      send_uart("Content-Type: text/html\n", 1000);
+	      send_uart("Connection: close\n\n", 1000);
+	      send_uart("<!DOCTYPE HTML>\n",1000);
+	      send_uart("<html>\n", 1000);
+	      send_uart("<body>\n", 1000);
+	      send_uart("<h1>Hello!</h1>\n", 1000);
+	      send_uart("</body>\n", 1000);
+	      send_uart("</html>\n\r\n", 1000);
+
+	      HAL_Delay(1000);
+	      send_uart("AT+CIPCLOSE=0\r\n", 1000);
+
+	      sprintf(text_buffer, "HTML sent to: %s", pch);
+		  scroll_text_left(text_buffer, 30, 6, 3);
+	  }
 
 	  /*
 	  //Alarm interrupt
