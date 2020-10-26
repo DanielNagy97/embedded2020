@@ -25,6 +25,7 @@
 #define CLOCK_PIN GPIO_PIN_5
 #define NUMBER_OF_CELLS 4
 
+volatile uint32_t interrupt_counter;
 
 void write_byte (uint8_t byte);
 
@@ -36,7 +37,7 @@ void max_init (uint8_t brightness);
 
 void set_byte_on_matrix(uint8_t byte, uint8_t row, uint8_t column);
 
-void display_character(uint8_t* character, uint8_t cell);
+void put_character_to_screen_buffer(char character, uint8_t cell, uint8_t shift);
 
 void display_screen_buffer();
 
@@ -44,8 +45,10 @@ void shift_screen_buffer_right();
 
 void shift_screen_buffer_left();
 
-uint8_t get_character(int code, uint8_t i);
+uint8_t* get_character(int code);
 
-void scroll_text_left(char* text, uint16_t speed, uint8_t blank_space);
+void scroll_text_left(char* text, uint16_t speed, uint8_t front_blank_space, uint8_t back_blank_space);
+
+void show_clock_face(char* time, int mp);
 
 #endif /* INC_MAX_DISPLAY_H_ */
