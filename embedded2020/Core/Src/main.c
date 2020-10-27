@@ -45,6 +45,8 @@
 /* Private variables ---------------------------------------------------------*/
 RTC_HandleTypeDef hrtc;
 
+UART_HandleTypeDef huart1;
+
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -99,7 +101,7 @@ int main(void)
 
   char* device_ip = esp_init("<ssid>", "<pswd>");
 
-  scroll_text_left(device_ip, 50, 0, 0); /* Writing out the IP of the ESP*/
+  scroll_text_left(device_ip, 50, 0, 6); /* Writing out the IP of the ESP*/
   /* sudo tcpdump host <ip-of-esp> -v */
 
   /* srand(time(NULL)); */

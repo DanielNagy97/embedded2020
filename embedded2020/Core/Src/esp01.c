@@ -13,18 +13,31 @@
 #include "esp01.h"
 
 char* webpage = "HTTP/1.1 200 OK\n\
-		         Content-Type: text/html\n\
-		         Connection: close\n\n\
-		  	     <!DOCTYPE HTML>\n\
-		  	  	 <html>\n\
-				 <head>\n\
-				 <meta charset=\"UTF-8\">\n\
-				 <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=no\">\n\
-				 </head>\n\
-				 <body style=\"text-align:center;\">\n\
-				 <a href = \"https://youtu.be/dQw4w9WgXcQ/\"><h1>Don't Click Me!</h1></a>\n\
-				 </body>\n\
-				 </html>\n\r\n";
+Content-Type: text/html\n\
+Connection: close\n\n\
+<!DOCTYPE html>\n\
+<html>\n\
+<head>\n\
+<meta charset=\"UTF-8\">\n\
+<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=no\">\n\
+</head>\n\
+<body>\n\
+Send this:\n\
+<input type=\"text\" id=\"TXT\" value=\"\">\n\
+</br>\n\
+<button onclick=\"sendTxt()\">Send to ESP</button>\n\
+<script>\n\
+function sendTxt() {\n\
+var x = document.getElementById(\"TXT\").value;\n\
+var url = document.URL;\n\
+var msg = \"+MSG,\"+x;\n\
+var xhr = new XMLHttpRequest();\n\
+xhr.open(\"POST\", url, true);\n\
+xhr.send(msg);\n\
+}\n\
+</script>\n\
+</body>\n\
+</html>\n\r\n";
 
 /* TODO: Put UART methods to separate source files */
 
@@ -45,7 +58,7 @@ void get_uart(uint8_t* uart_output, uint32_t timeout){
 	  * @param timeout The timeout of the UART communication as uint32_t
 	  * @return None
 	  */
-	  HAL_UART_Receive(&huart1, uart_output, 80, timeout);
+	  HAL_UART_Receive(&huart1, uart_output, 600, timeout);
 }
 
 /* TODO: returns to received msg instead of referencing to outer pointer! */
@@ -119,31 +132,46 @@ void server_start(){
 	  * @brief Running the server
 	  * @return None
 	  */
-	  char text_buffer[200] = {0};
-	  uint8_t uart_receive[200] = {0};
+	  //static char text_buffer[600] = {0};
+	  uint8_t uart_receive[600] = {0};
 
 	  get_uart(uart_receive, 10000); //request
-	  /* Check if the request has +IPD in it
-	   * Or wait for the +IPD or GET or for something*/
-	  char *pch = strstr((char*)uart_receive, "+IPD,");
-	  if(pch != NULL) {
-		  printf("%s\n", pch);
-	      pch = strtok(pch,",");
-	      pch = strtok(NULL,",");
-	      //link_id = (uint8_t)pch;
-	      int len = strlen(webpage);
-	      char data[80];
-	      sprintf (data, "AT+CIPSEND=%s,%d\r\n", pch, len);
 
-	      send_uart(data, 1000);
-	      HAL_Delay(1000);
-	      /* Wait for > (AT prompt)*/
-	      send_uart(webpage, 5000);
-	      HAL_Delay(500);
+	  if(strstr((char*)uart_receive, "GET")){
+		  char *link_id = strstr((char*)uart_receive, "+IPD,");
+		  if(link_id != NULL) {
+			  link_id = strtok(link_id, ",");
+			  link_id = strtok(NULL, ",");
+		      //link_id = (uint8_t)pch;
 
-	      send_uart("AT+CIPCLOSE=0\r\n", 2000);
+		      int len = strlen(webpage);
+		      char data[80];
+		      sprintf (data, "AT+CIPSEND=%s,%d\r\n", link_id, len);
 
-	      sprintf(text_buffer, "HTML sent to: %s", pch);
-		  scroll_text_left(text_buffer, 30, 6, 3);
+		      send_uart(data, 1000);
+		      HAL_Delay(1000);
+		      /* Wait for > (AT prompt)*/
+		      send_uart(webpage, 5000);
+		      HAL_Delay(500);
+
+		      send_uart("AT+CIPCLOSE=0\r\n", 2000);
+		  }
 	  }
+	  else if(strstr((char*)uart_receive, "POST")){
+		  char *message = strstr((char*)uart_receive, "+MSG,");
+		  if(message != NULL) {
+			  message = strtok(message, ",");
+			  message = strtok(NULL, ",");
+			  scroll_text_left(message, 30, 6, 32);
+		  }
+		  char *link_id = strstr((char*)uart_receive, "+IPD,");
+		  if(link_id != NULL) {
+			  link_id = strtok(link_id, ",");
+			  link_id = strtok(NULL, ",");
+		      //link_id = (uint8_t)pch;
+
+
+		  }
+	  }
+
 }
