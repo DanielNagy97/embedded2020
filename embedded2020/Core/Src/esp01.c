@@ -59,7 +59,7 @@ char* esp_init(char* ssid, char* pswd){
 	  * @brief Initalizing the esp-01 with AT commands
 	  * @param ssid The SSID of the Wifi as char*
 	  * @param pswd The password of the Wifi as char*
-	  * @return None
+	  * @return ip_address The esp device's IP as char*
 	  */
 	  char data[80] = {0};
 	  uint8_t uart_receive[200] = {0};
@@ -80,16 +80,14 @@ char* esp_init(char* ssid, char* pswd){
 	  /* Get IP address */
 	  send_uart("AT+CIFSR\r\n", 1000);
 	  uart_waitfor("CIFSR:STAIP,\"", 10, uart_receive);
-	  /* uart_waitfor("OK\r\n", 5); */
-
 	  /* Getting to ip address out of the message*/
-	  char* device_ip = strstr((char*)uart_receive, "CIFSR:STAIP,");
-	  if(device_ip != NULL) {
-		  device_ip = strtok(device_ip,"\"");
-		  device_ip = strtok(NULL,"\"");
+	  char* message_ip = strstr((char*)uart_receive, "CIFSR:STAIP,");
+	  static char ip_address[20] = {0};
+	  if(message_ip != NULL) {
+		  message_ip = strtok(message_ip,"\"");
+		  message_ip = strtok(NULL,"\"");
+		  sprintf(ip_address, "%s", message_ip);
 	  }
-	  //The IP here is correct
-	  //scroll_text_left(device_ip, 30, 0, 0);
 
 	  /* CIPMUX 1 */
 	  send_uart("AT+CIPMUX=1\r\n", 1000);
@@ -98,7 +96,8 @@ char* esp_init(char* ssid, char* pswd){
 	  /* Open port 80 */
 	  send_uart("AT+CIPSERVER=1,80\r\n", 1000);
 	  uart_waitfor("OK\r\n", 5, uart_receive);
-	  return device_ip;
+
+	  return ip_address;
 }
 
 void server_start(){

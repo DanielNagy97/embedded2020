@@ -97,9 +97,10 @@ int main(void)
   /* USER CODE BEGIN 2 */
   max_init(0x01);
 
-  /* TODO:Get the ip from the esp_init
-   * The first character is wrong???*/
   char* device_ip = esp_init("<ssid>", "<pswd>");
+
+  scroll_text_left(device_ip, 50, 0, 0); /* Writing out the IP of the ESP*/
+  /* sudo tcpdump host <ip-of-esp> -v */
 
   /* srand(time(NULL)); */
 
@@ -121,11 +122,6 @@ int main(void)
   HAL_RTC_SetAlarm_IT(&hrtc, &sAlarm, RTC_FORMAT_BIN);
   */
 
-  /* TODO: Write out the IP */
-  scroll_text_left(device_ip, 50, 0, 0);
-
-  /* sudo tcpdump host <ip-of-esp> -v */
-
   char text_buffer[80] = {0};
   uint8_t uart_receive[200] = {0};
 
@@ -139,6 +135,7 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
+	  /* TODO: Put this to server_start() and generalise it!*/
 	  text_buffer[0] = '\0';
 	  uart_receive[0] = '\0';
 
