@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <max_display.h>
+#include <esp01.h>
 
 /* USER CODE END Includes */
 
@@ -44,8 +45,6 @@
 /* Private variables ---------------------------------------------------------*/
 RTC_HandleTypeDef hrtc;
 
-UART_HandleTypeDef huart1;
-
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -61,21 +60,6 @@ static void MX_USART1_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
-/* buffers for uart */
-uint8_t uart_data[127] = {0};
-uint8_t uart_receive[127] = {0};
-
-void send_uart(char* text, uint32_t timeout){
-	  for(int i = 0; i<strlen(text); i++){
-		  uart_data[i] = (uint8_t)text[i];
-	  }
-	  HAL_UART_Transmit(&huart1, uart_data, strlen(text), timeout);
-}
-
-void get_uart(uint32_t timeout){
-	  HAL_UART_Receive(&huart1, uart_receive, 80, timeout);
-}
 
 
 /* USER CODE END 0 */
@@ -112,10 +96,12 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   max_init(0x01);
-  /* srand(time(NULL)); */
 
-  char text_buffer[80] = {0};
-  char text_buffer2[80] = {0};
+  /* TODO:Get the ip from the esp_init
+   * The first character is wrong???*/
+  char* device_ip = esp_init("<ssid>", "<pswd>");
+
+  /* srand(time(NULL)); */
 
   /*
   char text_buffer2[80] = {0};
@@ -135,28 +121,13 @@ int main(void)
   HAL_RTC_SetAlarm_IT(&hrtc, &sAlarm, RTC_FORMAT_BIN);
   */
 
-  send_uart("AT\r\n", 1000);
-  get_uart(1000);
-  HAL_Delay(1000);
-  send_uart("AT+CWMODE=1\r\n", 1000);
-  get_uart(1000);
-  sprintf(text_buffer2, "AT+CWJAP=\"%s\",\"%s\"\r\n", "<ssid>", "<pswd>");
-  send_uart(text_buffer2, 10000);
-  get_uart(10000);
-  get_uart(10000);
-  send_uart("AT+CIFSR\r\n", 1000);
-  get_uart(1000);
-  send_uart("AT+CIPMUX=1\r\n", 1000);
-  get_uart(1000);
-  send_uart("AT+CIPSERVER=1,80\r\n", 1000);
-  get_uart(1000);
-
-  //uint8_t link_id;
+  /* TODO: Write out the IP */
+  scroll_text_left(device_ip, 50, 0, 0);
 
   /* sudo tcpdump host <ip-of-esp> -v */
 
-  sprintf(text_buffer, "%s", (char*)uart_receive);
-  scroll_text_left("eze", 20, 6, 3);
+  char text_buffer[80] = {0};
+  uint8_t uart_receive[200] = {0};
 
   /* USER CODE END 2 */
 
@@ -169,8 +140,9 @@ int main(void)
     /* USER CODE BEGIN 3 */
 
 	  text_buffer[0] = '\0';
+	  uart_receive[0] = '\0';
 
-	  get_uart(10000);
+	  get_uart(uart_receive, 10000); //request
 	  /* Check if the request has +IPD in it*/
 	  char *pch = strstr((char*)uart_receive, "+IPD,");
 	  if(pch != NULL) {
