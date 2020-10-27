@@ -122,56 +122,17 @@ int main(void)
   HAL_RTC_SetAlarm_IT(&hrtc, &sAlarm, RTC_FORMAT_BIN);
   */
 
-  char text_buffer[80] = {0};
-  uint8_t uart_receive[200] = {0};
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  server_start();
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
-	  /* TODO: Put this to server_start() and generalise it!*/
-	  text_buffer[0] = '\0';
-	  uart_receive[0] = '\0';
-
-	  get_uart(uart_receive, 10000); //request
-	  /* Check if the request has +IPD in it*/
-	  char *pch = strstr((char*)uart_receive, "+IPD,");
-	  if(pch != NULL) {
-		  printf("%s\n", pch);
-	      pch = strtok(pch,",");
-	      pch = strtok(NULL,",");
-	      //link_id = (uint8_t)pch;
-	      int len = 122;
-	      char data[80];
-	      sprintf (data, "AT+CIPSEND=%s,%d\r\n", pch, len);
-
-	      send_uart(data, 1000);
-	      HAL_Delay(1000);
-	      /* Wait for > */
-	      //send_uart("HTTP/1.1 200 OK\nContent-Type: text/html\nConnection: close\n\n<!DOCTYPE HTML>\n<html>\n<body>\n<h1>Hello!</h1>\n</body>\n</html>\n\r\n", 3000);
-	      send_uart("HTTP/1.1 200 OK\n",1000);
-	      send_uart("Content-Type: text/html\n", 1000);
-	      send_uart("Connection: close\n\n", 1000);
-	      send_uart("<!DOCTYPE HTML>\n",1000);
-	      send_uart("<html>\n", 1000);
-	      send_uart("<body>\n", 1000);
-	      send_uart("<h1>Hello!</h1>\n", 1000);
-	      send_uart("</body>\n", 1000);
-	      send_uart("</html>\n\r\n", 1000);
-
-	      HAL_Delay(1000);
-	      send_uart("AT+CIPCLOSE=0\r\n", 1000);
-
-	      sprintf(text_buffer, "HTML sent to: %s", pch);
-		  scroll_text_left(text_buffer, 30, 6, 3);
-	  }
-
 	  /*
 	  //Alarm interrupt
 	  if (old_minute != interrupt_counter){

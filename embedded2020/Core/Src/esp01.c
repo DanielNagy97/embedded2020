@@ -12,6 +12,20 @@
 
 #include "esp01.h"
 
+char* webpage = "HTTP/1.1 200 OK\n\
+		         Content-Type: text/html\n\
+		         Connection: close\n\n\
+		  	     <!DOCTYPE HTML>\n\
+		  	  	 <html>\n\
+				 <head>\n\
+				 <meta charset=\"UTF-8\">\n\
+				 <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=no\">\n\
+				 </head>\n\
+				 <body style=\"text-align:center;\">\n\
+				 <a href = \"https://youtu.be/dQw4w9WgXcQ/\"><h1>Don't Click Me!</h1></a>\n\
+				 </body>\n\
+				 </html>\n\r\n";
+
 /* TODO: Put UART methods to separate source files */
 
 void send_uart(char* text, uint32_t timeout){
@@ -105,4 +119,31 @@ void server_start(){
 	  * @brief Running the server
 	  * @return None
 	  */
+	  char text_buffer[200] = {0};
+	  uint8_t uart_receive[200] = {0};
+
+	  get_uart(uart_receive, 10000); //request
+	  /* Check if the request has +IPD in it
+	   * Or wait for the +IPD or GET or for something*/
+	  char *pch = strstr((char*)uart_receive, "+IPD,");
+	  if(pch != NULL) {
+		  printf("%s\n", pch);
+	      pch = strtok(pch,",");
+	      pch = strtok(NULL,",");
+	      //link_id = (uint8_t)pch;
+	      int len = strlen(webpage);
+	      char data[80];
+	      sprintf (data, "AT+CIPSEND=%s,%d\r\n", pch, len);
+
+	      send_uart(data, 1000);
+	      HAL_Delay(1000);
+	      /* Wait for > (AT prompt)*/
+	      send_uart(webpage, 5000);
+	      HAL_Delay(500);
+
+	      send_uart("AT+CIPCLOSE=0\r\n", 2000);
+
+	      sprintf(text_buffer, "HTML sent to: %s", pch);
+		  scroll_text_left(text_buffer, 30, 6, 3);
+	  }
 }
