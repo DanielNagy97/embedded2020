@@ -130,7 +130,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  server_start();
+	  server_handle();
 
     /* USER CODE END WHILE */
 

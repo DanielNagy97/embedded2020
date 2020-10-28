@@ -23,12 +23,12 @@ UART_HandleTypeDef huart1;
 
 void send_uart(char* text, uint32_t timeout);
 
-void get_uart(uint8_t* uart_output, uint32_t timeout);
+uint8_t* get_uart(uint32_t timeout);
 
-void uart_waitfor(char* text, uint32_t times, uint8_t* uart_receive);
+uint8_t* uart_waitfor(char* text, uint32_t times);
 
 char* esp_init(char* ssid, char* pswd);
 
-void server_start();
+void server_handle();
 
 #endif /* INC_ESP01_H_ */
