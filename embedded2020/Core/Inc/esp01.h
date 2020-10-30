@@ -25,7 +25,7 @@ void send_uart(char* text, uint32_t timeout);
 
 uint8_t* get_uart(uint32_t timeout);
 
-uint8_t* uart_waitfor(char* text, uint32_t times);
+uint8_t* uart_waitfor(char* text, uint32_t times, uint32_t timeout);
 
 char* esp_init(char* ssid, char* pswd);
 
