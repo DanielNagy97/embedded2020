@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="shortcut icon" href="" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<style>
+body{
+text-align:center;
+margin:100px 10% 200px 10%;
+}
+#cont1{
+padding:10px;
+box-shadow:9px 9px 17px 0px rgba(50, 50, 50, 0.75);
+background:lightgrey;
+}
+input{
+box-sizing:border-box;
+width:100%;
+font-size:20px;
+height:40px;
+margin-bottom:5px;
+}
+.btn{
+float:right;
+position:relative;
+background-color:grey;
+border:none;
+font-size:16px;
+color:white;
+padding:20px;
+width:150px;
+text-align:center;
+transition-duration:0.4s;
+text-decoration:none;
+overflow:hidden;
+cursor:pointer;
+}
+.btn:after{
+content:"";
+background:#f1f1f1;
+display:block;
+position:absolute;
+padding-top:300%;
+padding-left:350%;
+margin-left:-20px !important;
+margin-top:-120%;
+opacity:0;
+transition:all 0.8s
+}
+.btn:active:after{
+padding:0;
+margin:0;
+opacity:1;
+transition:0s
+}
+#conf {
+margin-top:40px;
+background-color:#eee;
+color:#444;
+cursor:pointer;
+padding:12px;
+width:100%;
+border:none;
+text-align:left;
+outline:none;
+font-size:16px;
+}
+.panel {
+padding:0 18px;
+background-color:white;
+max-height:0;
+overflow:hidden;
+font-size:16px;
+transition:max-height 0.2s ease-out;
+}
+</style>
+<script>
+function sendTxt() {
+var x=document.getElementById("TXT").value;
+var url=document.URL;
+var msg="+MSG~"+x+"~";
+var xhr=new XMLHttpRequest();
+xhr.open("POST",url,true);
+xhr.send(msg);
+}
+</script>
+</head>
+
+<body>
+<div id="cont1">
+<h2>STM32 Clock</h2>
+<br>
+<input type="text" id="TXT" value="">
+</br>
+<button class="btn" onclick="sendTxt()">Send text</button>
+</br>
+<button id="conf">Settings</button>
+<div class="panel">
+<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit</p>
+</div>
+<script>
+var acc=document.getElementById("conf");
+acc.addEventListener("click", function(){
+    this.classList.toggle("active");
+    var panel=this.nextElementSibling;
+    if (panel.style.maxHeight) {
+      panel.style.maxHeight=null;
+    } else {
+      panel.style.maxHeight=panel.scrollHeight + "px";
+    } 
+});
+</script>
+</div>
+</body>
+</html>
