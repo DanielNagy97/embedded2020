@@ -351,6 +351,21 @@ uint8_t* get_character(int code){
 	return character_byte;
 }
 
+void put_column_to_screen_buffer(uint8_t* character, int char_column){
+	/**
+	  * @brief Putting a character column to the end of the screen_buffer
+	  * @param character The character as uint8_t*
+	  * @param char_column The column of the character to display as int
+	  * @return None
+	  */
+	/* bit masking - The k.th bit of n: (n & ( 1 << k )) >> k */
+    for(int k=0; k<8; k++){
+        screen_buffer[NUMBER_OF_CELLS-1][k] =
+            screen_buffer[NUMBER_OF_CELLS-1][k]
+                | (character[k+1] & ( 1 << char_column )) >> char_column;
+    }
+}
+
 void scroll_text_left(char* text, uint16_t speed,
 					  uint8_t front_blank_space, uint8_t back_blank_space){
 	/**
@@ -369,18 +384,15 @@ void scroll_text_left(char* text, uint16_t speed,
 	}
 
 	for(int i = 0; i<strlen(text); i++){
+		/* Getting rid of the special character's prefix byte */
 		if(text[i] == 195 || text[i] == 197){
 			continue;
 		}
 		uint8_t* character = get_character(text[i]);
+		/* character[0] is the width info of the character */
 		for(int j = character[0]; j>=0; j--){
 			shift_screen_buffer_left();
-			for(int k = 0; k<8; k++){
-				/* bit masking - The k.th bit of n: (n & ( 1 << k )) >> k */
-				screen_buffer[NUMBER_OF_CELLS-1][k] =
-				    screen_buffer[NUMBER_OF_CELLS-1][k]
-						  | (character[k+1] & ( 1 << j )) >> j;
-			}
+			put_column_to_screen_buffer(character, j);
 			display_screen_buffer();
 			HAL_Delay(speed);
 		}
@@ -390,6 +402,49 @@ void scroll_text_left(char* text, uint16_t speed,
 		shift_screen_buffer_left();
 		display_screen_buffer();
 		HAL_Delay(speed);
+	}
+}
+
+void scroll_text_left_IT(char* text, int* char_index, int* char_column){
+	/**
+	  * @brief Scrolling text on the screen with interrupts
+	  * (displaying one column at a time)
+	  * @param text The input text as char*
+	  * @param char_index The index of the character to display as int*
+	  * (initial value of char_index must be 0)
+	  * @param char_column The column of the character to display as int*
+	  * (initial value of char_column must be -1)
+	  * @return None
+	  */
+	if(*char_index < strlen(text)){
+	  	if(text[*char_index] == 195 || text[*char_index] == 197){
+	  		(*char_index)++;
+	  	}
+	  	uint8_t* character = get_character(text[*char_index]);
+
+	  	if(*char_column < 0){
+	  		*char_column = character[0];
+	  	}
+	    if(*char_column >= 0){
+	        shift_screen_buffer_left();
+	        put_column_to_screen_buffer(character, *char_column);
+	        display_screen_buffer();
+	        (*char_column)--;
+	    }
+	    if(*char_column < 0){
+	        (*char_index)++;
+	    }
+	}
+	else if (*char_index < strlen(text)+32){
+        /* shifting x times */
+        shift_screen_buffer_left();
+        display_screen_buffer();
+        (*char_index)++;
+	}
+	else{
+		//text[0] = '\0'; // text nullázása
+        *char_index = 0;
+        *char_column = -1;
 	}
 }
 

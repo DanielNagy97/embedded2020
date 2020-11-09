@@ -25,7 +25,8 @@
 #define CLOCK_PIN GPIO_PIN_5
 #define NUMBER_OF_CELLS 4
 
-volatile uint32_t interrupt_counter;
+volatile uint8_t update_screen;
+volatile uint8_t update_clock;
 
 void write_byte (uint8_t byte);
 
@@ -47,7 +48,11 @@ void shift_screen_buffer_left();
 
 uint8_t* get_character(int code);
 
+void put_column_to_screen_buffer(uint8_t* character, int j);
+
 void scroll_text_left(char* text, uint16_t speed, uint8_t front_blank_space, uint8_t back_blank_space);
+
+void scroll_text_left_IT(char* text, int* char_index, int* char_collumn);
 
 void show_clock_face(char* time, int mp);
 

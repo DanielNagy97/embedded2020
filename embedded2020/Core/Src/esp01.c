@@ -53,7 +53,6 @@ STM32 Clock\n\
 </body>\n\
 </html>\n\r\n";
 
-
 /* TODO: Put UART methods to separate source files */
 void send_uart(char* text, uint32_t timeout){
 	/**
@@ -74,7 +73,6 @@ uint8_t* get_uart(uint32_t timeout){
 	  */
 	  static uint8_t uart_output[600] = {0};
 	  HAL_UART_Receive(&huart1, uart_output, 600, timeout);
-
 	  return uart_output;
 }
 
@@ -152,7 +150,7 @@ char* esp_init(char* ssid, char* pswd){
 	  return ip_address;
 }
 
-void server_handle(){
+char* server_handle(){
 	/**
 	  * @brief Running the server
 	  * @return None
@@ -160,9 +158,9 @@ void server_handle(){
 	  uint8_t* uart_receive;
 
 	  /* TODO: Make this with interrupts! */
-	  uart_receive = get_uart(1000); /* receive request */
+	  uart_receive = get_uart(10); /* receive request */
 	  if(!uart_receive){
-		  return;
+		  return NULL;
 	  }
 	  if(strstr((char*)uart_receive, "GET")){
 		  char *link_id = strstr((char*)uart_receive, "+IPD,");
@@ -187,7 +185,7 @@ void server_handle(){
 			  message = strtok(message, "~");
 			  message = strtok(NULL, "~");
 			  /* TODO: return this message to main*/
-			  scroll_text_left(message, 40, 0, 32);
+			  return message;
 		  }
 		  char *link_id = strstr((char*)uart_receive, "+IPD,");
 		  if(link_id != NULL) {
@@ -195,4 +193,5 @@ void server_handle(){
 			  link_id = strtok(NULL, ",");
 		  }
 	  }
+	  return NULL;
 }

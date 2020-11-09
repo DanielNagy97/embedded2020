@@ -20,6 +20,7 @@
 #define INC_ESP01_H_
 
 UART_HandleTypeDef huart1;
+volatile uint8_t uart_interrupt;
 
 void send_uart(char* text, uint32_t timeout);
 
@@ -29,6 +30,6 @@ uint8_t* uart_waitfor(char* text, uint32_t times, uint32_t timeout);
 
 char* esp_init(char* ssid, char* pswd);
 
-void server_handle();
+char* server_handle();
 
 #endif /* INC_ESP01_H_ */
