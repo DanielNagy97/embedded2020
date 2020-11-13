@@ -22,7 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <max_display.h>
+#include <scrolling_text.h>
 #include <esp01.h>
 
 /* USER CODE END Includes */
@@ -105,25 +105,25 @@ int main(void)
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
   max_init(0x01);
-  HAL_TIM_Base_Start_IT(&htim4);
-  HAL_TIM_Base_Start_IT(&htim3);
+
+  HAL_TIM_Base_Start_IT(&htim4); /* Scrolling text timer*/
+  HAL_TIM_Base_Start_IT(&htim3); /* Clock face timer*/
 
   RTC_TimeTypeDef currTime = {10, 12, 0};
-  RTC_DateTypeDef currDate = {0, 10, 26, 20};
+  RTC_DateTypeDef currDate = {0, 11, 13, 20};
   HAL_RTC_SetDate(&hrtc, &currDate, RTC_FORMAT_BIN);
   HAL_RTC_SetTime(&hrtc, &currTime, RTC_FORMAT_BIN);
 
+  Scrolling_text scrolling_text = {};
+  scrolling_text.char_column = -1;
+  scrolling_text.char_index = 0;
 
-  char text_buffer[100] = {0};
-  char clock_buffer[100] = {0};
+  //sprintf(scrolling_text.text,"Nellybaba nagyon büdös mostanában :-)");
 
-  //char* device_ip = esp_init("ssid", "pswd");
+  char* device_ip = esp_init("ssid", "pswd");
+  sprintf(scrolling_text.text, device_ip);
 
-  //sprintf(text_buffer, device_ip);
-  //scroll_text_left(device_ip, 40, 0, 6); /* Writing out the IP of the ESP*/
-  /* sudo tcpdump host <ip-of-esp> -v */
-
-  /* srand(time(NULL)); */
+  //char clock_buffer[100] = {0};
 
   /*
   char text_buffer2[80] = {0};
@@ -131,48 +131,29 @@ int main(void)
   RTC_DateTypeDef currDate = {0, 10, 26, 20};
   HAL_RTC_SetDate(&hrtc, &currDate, RTC_FORMAT_BIN);
   HAL_RTC_SetTime(&hrtc, &currTime, RTC_FORMAT_BIN);
-
-  uint8_t old_minute = interrupt_counter;
-
-  RTC_AlarmTypeDef sAlarm;
-  sAlarm.AlarmTime.Hours   = 10;
-  sAlarm.AlarmTime.Minutes = 12;
-  sAlarm.AlarmTime.Seconds = 5;
-  sAlarm.Alarm = RTC_ALARM_A;
-
-  HAL_RTC_SetAlarm_IT(&hrtc, &sAlarm, RTC_FORMAT_BIN);
-
-
   */
 
-  /* These variables are used to keep track of the scrolling text */
-  int char_index = 0;
-  int char_collumn = -1;
-  sprintf(text_buffer, "Minden tizedik másodpercben kijelzi az időt...");
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  /*
+/*
 	  char* text = server_handle();
 	  if(text){
 		  sprintf(text_buffer, text);
 	  }
-	  */
+*/
 
-	  /*
-	  if(uart_interrupt == 1){
-		  HAL_Delay(1000);
-		  uart_interrupt = 0;
-	  }
-	  */
 	  //The tim4 screen updater interrupt 40ms (25Hz)
 	  if(update_screen == 1){
-		  scroll_text_left_IT(text_buffer, &char_index, &char_collumn);
+		  scroll_text_left_IT(&scrolling_text);
 		  update_screen = 0;
 	  }
+
+
+	  /*
 	  if(update_clock == 1){
 		  HAL_RTC_GetTime(&hrtc, &currTime, RTC_FORMAT_BIN);
 		  sprintf(clock_buffer, "%d%d", currTime.Hours, currTime.Minutes);
@@ -180,6 +161,7 @@ int main(void)
 		  HAL_Delay(2000);
 		  update_clock = 0;
 	  }
+	  */
 
 	  /* Changing the timer runtime:
 	   * TIM4->PSC = 99;*/

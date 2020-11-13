@@ -11,6 +11,7 @@
  */
 
 #include "main.h"
+#include "max_driver.h"
 #include <time.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -19,26 +20,8 @@
 #ifndef INC_MAX_DISPLAY_H_
 #define INC_MAX_DISPLAY_H_
 
-#define MAXPORT GPIOA
-#define DATA_PIN GPIO_PIN_7
-#define CS_PIN GPIO_PIN_6
-#define CLOCK_PIN GPIO_PIN_5
-#define NUMBER_OF_CELLS 4
-
 volatile uint8_t update_screen;
 volatile uint8_t update_clock;
-
-void write_byte (uint8_t byte);
-
-void write_max_cmd (uint8_t address, uint8_t cmd);
-
-void max_clear();
-
-void max_init (uint8_t brightness);
-
-void set_byte_on_matrix(uint8_t byte, uint8_t row, uint8_t column);
-
-void put_character_to_screen_buffer(char character, uint8_t cell, uint8_t shift);
 
 void display_screen_buffer();
 
@@ -50,10 +33,6 @@ uint8_t* get_character(int code);
 
 void put_column_to_screen_buffer(uint8_t* character, int j);
 
-void scroll_text_left(char* text, uint16_t speed, uint8_t front_blank_space, uint8_t back_blank_space);
-
-void scroll_text_left_IT(char* text, int* char_index, int* char_collumn);
-
-void show_clock_face(char* time, int mp);
+void put_character_to_screen_buffer(char character, uint8_t cell, uint8_t shift);
 
 #endif /* INC_MAX_DISPLAY_H_ */
