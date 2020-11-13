@@ -24,6 +24,7 @@
 /* USER CODE BEGIN Includes */
 #include <scrolling_text.h>
 #include <esp01.h>
+#include <clock_face.h>
 
 /* USER CODE END Includes */
 
@@ -109,29 +110,24 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim4); /* Scrolling text timer*/
   HAL_TIM_Base_Start_IT(&htim3); /* Clock face timer*/
 
-  RTC_TimeTypeDef currTime = {10, 12, 0};
+  //TODO: Get the time from the web!
+  //An alarm can be used for clock synchronisation (every midnight, or something..)
+  /* Initial values for the time and date */
+  RTC_TimeTypeDef currTime = {9, 2, 0};
   RTC_DateTypeDef currDate = {0, 11, 13, 20};
   HAL_RTC_SetDate(&hrtc, &currDate, RTC_FORMAT_BIN);
   HAL_RTC_SetTime(&hrtc, &currTime, RTC_FORMAT_BIN);
 
   Scrolling_text scrolling_text = {};
+  scrolling_text.times = 3; /* max value should be 10 (on frontend)*/
   scrolling_text.char_column = -1;
   scrolling_text.char_index = 0;
 
-  //sprintf(scrolling_text.text,"Nellybaba nagyon büdös mostanában :-)");
+  sprintf(scrolling_text.text, "Nellybaba egy büdös egér");
 
-  char* device_ip = esp_init("ssid", "pswd");
-  sprintf(scrolling_text.text, device_ip);
-
-  //char clock_buffer[100] = {0};
-
-  /*
-  char text_buffer2[80] = {0};
-  RTC_TimeTypeDef currTime = {10, 12, 0};
-  RTC_DateTypeDef currDate = {0, 10, 26, 20};
-  HAL_RTC_SetDate(&hrtc, &currDate, RTC_FORMAT_BIN);
-  HAL_RTC_SetTime(&hrtc, &currTime, RTC_FORMAT_BIN);
-  */
+  //TODO: Make the UART communication interrupted!!!
+  //char* device_ip = esp_init("ssid", "pswd");
+  //sprintf(scrolling_text.text, device_ip);
 
   /* USER CODE END 2 */
 
@@ -139,53 +135,46 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-/*
-	  char* text = server_handle();
-	  if(text){
-		  sprintf(text_buffer, text);
-	  }
-*/
-
-	  //The tim4 screen updater interrupt 40ms (25Hz)
-	  if(update_screen == 1){
+	  /* The tim4 screen updater interrupt 40ms (25Hz) */
+	  if(update_screen == 1 && strlen(scrolling_text.text) != 0){
 		  scroll_text_left_IT(&scrolling_text);
 		  update_screen = 0;
 	  }
 
-
-	  /*
-	  if(update_clock == 1){
+	  /* The tim3 clock-face showing interrupt */
+	  if(update_clock == 1 && strlen(scrolling_text.text) == 0){
 		  HAL_RTC_GetTime(&hrtc, &currTime, RTC_FORMAT_BIN);
-		  sprintf(clock_buffer, "%d%d", currTime.Hours, currTime.Minutes);
-		  show_clock_face(clock_buffer,1);
-		  HAL_Delay(2000);
+		  show_clock_face(&currTime);
+
+		  /* Showing the date in every 30 seconds */
+		  if (currTime.Seconds % 30 == 0){
+			  HAL_RTC_GetDate(&hrtc, &currDate, RTC_FORMAT_BIN);
+			  char* date = get_date_string(&currDate);
+			  sprintf(scrolling_text.text, "    %s", date);
+			  scrolling_text.times = 1;
+		  }
 		  update_clock = 0;
 	  }
-	  */
 
+	  /*
+	   * Server handling method (Triggered by UART interrupt or something...)
+	   * if(strlen(uart_buffer) != 0 ){
+	   * 	  char* text = server_handle(uart_buffer);
+	  	  	  if(text){ // the message sent by POST
+		  	  sprintf(scrolling_text.text, text);
+		  	  scrolling_text.times = 1;
+		  	  // The message can be stored in a struct with setting values...
+		  	  // Setting values: Speed, Intensity, Times
+	  }
+	   *
+	   * }
+ 	  */
 	  /* Changing the timer runtime:
 	   * TIM4->PSC = 99;*/
 
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  /*
-	  //Alarm interrupt
-	  if (old_minute != interrupt_counter){
-		  old_minute = interrupt_counter;
-		  HAL_RTC_GetDate(&hrtc, &currDate, RTC_FORMAT_BIN);
-		  sprintf(text_buffer2, "%d.%d.%d.", currDate.Year+2000, currDate.Month, currDate.Date);
-		  scroll_text_left(text_buffer2, 30, 16, 32);
-	  }
-
-	  HAL_RTC_GetTime(&hrtc, &currTime, RTC_FORMAT_BIN);
-	  sprintf(text_buffer, "%d%d", currTime.Hours, currTime.Minutes);
-	  show_clock_face(text_buffer,1);
-	  HAL_Delay(1000);
-	  show_clock_face(text_buffer, 0);
-	  HAL_Delay(1000);
-	  */
-
   }
   /* USER CODE END 3 */
 }
@@ -312,9 +301,9 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 19999;
+  htim3.Init.Prescaler = 7200;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 35999;
+  htim3.Init.Period = 10000;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)

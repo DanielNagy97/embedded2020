@@ -18,6 +18,7 @@
 
 typedef struct Scrolling_texts {
    char text[150];
+   int times;
    int char_index;
    int char_column;
 } Scrolling_text;
@@ -25,7 +26,5 @@ typedef struct Scrolling_texts {
 void scroll_text_left(char* text, uint16_t speed, uint8_t front_blank_space, uint8_t back_blank_space);
 
 void scroll_text_left_IT(Scrolling_text *scrolling_text);
-
-void show_clock_face(char* time, int mp);
 
 #endif /* INC_SCROLLING_TEXT_H_ */

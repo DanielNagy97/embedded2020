@@ -25,6 +25,7 @@
 /* USER CODE BEGIN Includes */
 #include "max_display.h"
 #include "esp01.h"
+#include "clock_face.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

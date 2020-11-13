@@ -118,19 +118,6 @@ uint8_t character_table[103][9] = {
 {5, 0x5, 0xa, 0x0, 0x11, 0x11, 0x13, 0xd, 0x0}, /* ű */
 };
 
-uint8_t clock_numbers[10][9]={
-{6, 0x1e, 0x33, 0x37, 0x3b, 0x33, 0x33, 0x1e, 0x0}, /* 48 - 0x30 0 */
-{6, 0xe,  0x1e, 0x6,  0x6,  0x6,  0x6,  0x6,  0x0}, /* 1 */
-{6, 0x1e, 0x33, 0x3,  0x1f, 0x30, 0x33, 0x3f, 0x0}, /* 2 */
-{6, 0x1e, 0x33, 0x3,  0xf,  0x3,  0x33, 0x1e, 0x0}, /* 3 */
-{6, 0x6,  0xe,  0x16, 0x26, 0x3f, 0x6,  0x6,  0x0}, /* 4 */
-{6, 0x3f, 0x30, 0x3e, 0x33, 0x3,  0x33, 0x1e, 0x0}, /* 5 */
-{6, 0x1e, 0x33, 0x30, 0x3f, 0x33, 0x33, 0x1e, 0x0}, /* 6 */
-{6, 0x3f, 0x23, 0x3,  0x6,  0x6,  0xc,  0xc,  0x0}, /* 7 */
-{6, 0x1e, 0x33, 0x33, 0x1e, 0x33, 0x33, 0x1e, 0x0}, /* 8 */
-{6, 0x1e, 0x33, 0x33, 0x1f, 0x3,  0x33, 0x1e, 0x0}, /* 9 */
-};
-
 uint8_t screen_buffer[NUMBER_OF_CELLS][8] = {0};
 
 void display_screen_buffer(){
@@ -142,6 +129,19 @@ void display_screen_buffer(){
 	for(int i = 0; i<NUMBER_OF_CELLS; i++){
 		for(int j = 0; j<8; j++){
 			set_byte_on_matrix(screen_buffer[i][j], j+1, i);
+		}
+	}
+}
+
+void empty_screen_buffer(){
+	/**
+	  * @brief Setting all values to 0
+	  * @param None
+	  * @return None
+	  */
+	for(int i = 0; i<NUMBER_OF_CELLS; i++){
+		for(int j = 0; j<8; j++){
+			screen_buffer[i][j] = 0;
 		}
 	}
 }
@@ -279,23 +279,32 @@ void put_column_to_screen_buffer(uint8_t* character, int char_column){
 	  * @return None
 	  */
 	/* bit masking - The k.th bit of n: (n & ( 1 << k )) >> k */
-    for(int k=0; k<8; k++){
-        screen_buffer[NUMBER_OF_CELLS-1][k] =
-            screen_buffer[NUMBER_OF_CELLS-1][k]
-                | (character[k+1] & ( 1 << char_column )) >> char_column;
+    for(int i=0; i<8; i++){
+        screen_buffer[NUMBER_OF_CELLS-1][i] =
+            screen_buffer[NUMBER_OF_CELLS-1][i]
+                | (character[i+1] & ( 1 << char_column )) >> char_column;
     }
 }
 
-void put_character_to_screen_buffer(char character, uint8_t cell, uint8_t shift){
+void put_character_to_screen_buffer(uint8_t* character, uint8_t cell, uint8_t shift){
 	/**
 	  * @brief Putting character to a specified specified cell
 	  * @param character The character as a uint8_t * 8x8 matrix
 	  * @param cell The index of the led matrix cell as uint8_t (starts from 0)
 	  * @return None
 	  */
-
-	uint8_t* character_arr = clock_numbers[character-0x30];
 	for(int i = 0; i<8; i++){
-		screen_buffer[cell][i] = character_arr[i+1] << shift;
+		screen_buffer[cell][i] = character[i+1] << shift;
 	}
+}
+
+void put_byte_to_screen_buffer_with_OR(uint8_t byte, uint8_t column, uint8_t row){
+	/**
+	  * @brief Putting a to the screen_buffer
+	  * @param byte The byte as uint8_t*
+	  * @param column The cell of the matrix
+	  * @param row The row of the matrix
+	  * @return None
+	  */
+	screen_buffer[column][row] = screen_buffer[column][row] | byte;
 }

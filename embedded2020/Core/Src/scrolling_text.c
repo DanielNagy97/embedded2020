@@ -84,29 +84,11 @@ void scroll_text_left_IT(Scrolling_text* st){
         (st->char_index)++;
 	}
 	else{
-		//text[0] = '\0'; // text nullázása
 		st->char_index = 0;
 		st->char_column = -1;
+		(st->times)--;
+		if (st->times <= 0){
+			st->text[0] = '\0';
+		}
 	}
-}
-
-void show_clock_face(char* time, int mp){
-
-	  put_character_to_screen_buffer(time[0], 0, 1);
-	  put_character_to_screen_buffer(time[1], 1, 2);
-	  put_character_to_screen_buffer(time[2], 2, 0);
-	  put_character_to_screen_buffer(time[3], 3, 1);
-
-	  /*
-	  if(mp){
-		  for(int j = 1; j<=2; j++){
-			  screen_buffer[1][j] = screen_buffer[1][j] | 0x1;
-			  screen_buffer[2][j] = screen_buffer[2][j] | 0x80;
-			  screen_buffer[1][j+4] = screen_buffer[1][j+4] | 0x1;
-			  screen_buffer[2][j+4] = screen_buffer[2][j+4] | 0x80;
-		  }
-	  }
-	  */
-
-	  display_screen_buffer();
 }
