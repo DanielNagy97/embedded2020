@@ -24,6 +24,6 @@ volatile uint8_t uart_interrupt;
 
 char* esp_init(char* ssid, char* pswd);
 
-char* server_handle();
+char* server_handle(uint8_t* uart_receive);
 
 #endif /* INC_ESP01_H_ */

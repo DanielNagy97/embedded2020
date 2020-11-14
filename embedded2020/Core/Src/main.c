@@ -69,9 +69,9 @@ static void MX_TIM3_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-uint8_t receive_it[6] = {0};
+uint8_t receive_it[600] = {0};
 
-char receive_buffer[600] = {0};
+//char receive_buffer[1000] = {0};
 
 /* USER CODE END 0 */
 
@@ -128,7 +128,6 @@ int main(void)
 
   //sprintf(scrolling_text.text, "Nellybaba egy büdös egér");
 
-  //TODO: Make the UART communication interrupted!!!
   char* device_ip = esp_init("ssid", "pswd");
   sprintf(scrolling_text.text, device_ip);
 
@@ -140,20 +139,19 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  /*
-	  char* text = server_handle();
-	  if(strlen(text) != 0){
-		  sprintf(scrolling_text.text, text);
-		  scrolling_text.times = 2;
-		  scrolling_text.char_column = -1;
-		  scrolling_text.char_index = 0;
-	  }
-	  */
-	  if(uart_interrupt){
-		  sprintf(scrolling_text.text, "Uart");
-		  scrolling_text.times = 1;
-		  scrolling_text.char_column = -1;
-		  scrolling_text.char_index = 0;
+	  /* Parsing the UART-buffer */
+	  //NOTE: Bug: after POST you have to reload the new page twice
+	  //Maybe the POST generating an another request...
+	  if(uart_interrupt && strlen((char*)receive_it) > 1){
+		  HAL_Delay(500);
+		  char* msg = server_handle(receive_it);
+		  if(strlen(msg) != 0){
+			  sprintf(scrolling_text.text, msg);
+			  scrolling_text.times = 3;
+			  scrolling_text.char_column = -1;
+			  scrolling_text.char_index = 0;
+		  }
+
 		  uart_interrupt = 0;
 	  }
 
@@ -178,19 +176,6 @@ int main(void)
 		  update_clock = 0;
 	  }
 
-	  /*
-	   * Server handling method (Triggered by UART interrupt or something...)
-	   * if(strlen(uart_buffer) != 0 ){
-	   * 	  char* text = server_handle(uart_buffer);
-	  	  	  if(text){ // the message sent by POST
-		  	  sprintf(scrolling_text.text, text);
-		  	  scrolling_text.times = 1;
-		  	  // The message can be stored in a struct with setting values...
-		  	  // Setting values: Speed, Intensity, Times
-	  }
-	   *
-	   * }
- 	  */
 	  /* Changing the timer runtime:
 	   * TIM4->PSC = 99;*/
 

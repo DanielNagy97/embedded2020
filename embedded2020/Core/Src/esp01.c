@@ -105,19 +105,12 @@ char* esp_init(char* ssid, char* pswd){
 	  return ip_address;
 }
 
-char* server_handle(){
+char* server_handle(uint8_t* uart_receive){
 	/**
 	  * @brief Running the server
 	  * @see sudo tcpdump host <ip-of-esp> -v
 	  * @return None
 	  */
-	  uint8_t* uart_receive;
-
-	  /* TODO: Make this with interrupts! */
-	  uart_receive = get_uart(40); /* receive request */
-	  if(!uart_receive){
-		  return NULL;
-	  }
 	  if(strstr((char*)uart_receive, "GET")){
 		  char *link_id = strstr((char*)uart_receive, "+IPD,");
 		  if(link_id != NULL) {
@@ -128,26 +121,32 @@ char* server_handle(){
 		      char data[30];
 		      sprintf (data, "AT+CIPSEND=%s,%d\r\n", link_id, len);
 		      send_uart(data, 1000);
-		      uart_waitfor(">", 5, 1000); /* The AT prompt */
+		      HAL_Delay(500);
+		      //uart_waitfor(">", 5, 1000); /* The AT prompt */
 		      send_uart(webpage, 5000);
-		      uart_waitfor("SEND OK", 5, 1000);
+		      HAL_Delay(500);
+		      //uart_waitfor("SEND OK", 5, 1000);
 		      send_uart("AT+CIPCLOSE=0\r\n", 2000);
-		      uart_waitfor("OK", 5, 1000);
+		      //uart_waitfor("OK", 5, 1000);
+
+		      /* Deleting the buffer */
+		      uart_receive[0] = '\0';
 		  }
 	  }
 	  else if(strstr((char*)uart_receive, "POST")){
-		  char *message = strstr((char*)uart_receive, "+MSG~");
+		  char* message = strstr((char*)uart_receive, "+MSG~");
 		  if(message != NULL) {
 			  message = strtok(message, "~");
 			  message = strtok(NULL, "~");
-			  /* TODO: return this message to main*/
+
+		      /* Deleting the buffer */
+			  uart_receive[0] = '\0';
+
 			  return message;
 		  }
-		  char *link_id = strstr((char*)uart_receive, "+IPD,");
-		  if(link_id != NULL) {
-			  link_id = strtok(link_id, ",");
-			  link_id = strtok(NULL, ",");
-		  }
+	  }
+	  else{
+		  uart_receive[0] = '\0';
 	  }
 	  return NULL;
 }
