@@ -63,6 +63,9 @@ extern TIM_HandleTypeDef htim4;
 extern UART_HandleTypeDef huart1;
 /* USER CODE BEGIN EV */
 
+extern uint8_t receive_it[6];
+
+extern receive_buffer[600];
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -235,10 +238,12 @@ void TIM4_IRQHandler(void)
 void USART1_IRQHandler(void)
 {
   /* USER CODE BEGIN USART1_IRQn 0 */
-uart_interrupt = 1;
+	uart_interrupt = 1;
   /* USER CODE END USART1_IRQn 0 */
   HAL_UART_IRQHandler(&huart1);
   /* USER CODE BEGIN USART1_IRQn 1 */
+  	sprintf(receive_buffer + strlen(receive_buffer), (char*)receive_it);
+  	HAL_UART_Receive_IT(&huart1, receive_it, 1);
 
 
   /* USER CODE END USART1_IRQn 1 */

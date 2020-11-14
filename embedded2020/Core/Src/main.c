@@ -69,6 +69,9 @@ static void MX_TIM3_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+uint8_t receive_it[6] = {0};
+
+char receive_buffer[600] = {0};
 
 /* USER CODE END 0 */
 
@@ -123,11 +126,13 @@ int main(void)
   scrolling_text.char_column = -1;
   scrolling_text.char_index = 0;
 
-  sprintf(scrolling_text.text, "Nellybaba egy büdös egér");
+  //sprintf(scrolling_text.text, "Nellybaba egy büdös egér");
 
   //TODO: Make the UART communication interrupted!!!
-  //char* device_ip = esp_init("ssid", "pswd");
-  //sprintf(scrolling_text.text, device_ip);
+  char* device_ip = esp_init("ssid", "pswd");
+  sprintf(scrolling_text.text, device_ip);
+
+  HAL_UART_Receive_IT(&huart1, receive_it, 1);
 
   /* USER CODE END 2 */
 
@@ -135,6 +140,23 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  /*
+	  char* text = server_handle();
+	  if(strlen(text) != 0){
+		  sprintf(scrolling_text.text, text);
+		  scrolling_text.times = 2;
+		  scrolling_text.char_column = -1;
+		  scrolling_text.char_index = 0;
+	  }
+	  */
+	  if(uart_interrupt){
+		  sprintf(scrolling_text.text, "Uart");
+		  scrolling_text.times = 1;
+		  scrolling_text.char_column = -1;
+		  scrolling_text.char_index = 0;
+		  uart_interrupt = 0;
+	  }
+
 	  /* The tim4 screen updater interrupt 40ms (25Hz) */
 	  if(update_screen == 1 && strlen(scrolling_text.text) != 0){
 		  scroll_text_left_IT(&scrolling_text);
@@ -419,10 +441,10 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, clock_Pin|cs_Pin|data_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : clock_Pin cs_Pin data_Pin */
-  GPIO_InitStruct.Pin = clock_Pin|cs_Pin|data_Pin;
+  /*Configure GPIO pins : PA5 PA6 PA7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

@@ -58,12 +58,6 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define clock_Pin GPIO_PIN_5
-#define clock_GPIO_Port GPIOA
-#define cs_Pin GPIO_PIN_6
-#define cs_GPIO_Port GPIOA
-#define data_Pin GPIO_PIN_7
-#define data_GPIO_Port GPIOA
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

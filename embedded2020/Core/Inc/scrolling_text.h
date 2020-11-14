@@ -17,7 +17,7 @@
 #define INC_SCROLLING_TEXT_H_
 
 typedef struct Scrolling_texts {
-   char text[150];
+   char text[600];
    int times;
    int char_index;
    int char_column;
