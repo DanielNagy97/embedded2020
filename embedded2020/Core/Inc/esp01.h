@@ -21,9 +21,10 @@
 
 UART_HandleTypeDef huart1;
 volatile uint8_t uart_interrupt;
+volatile int uart_interrupt_counter;
 
 char* esp_init(char* ssid, char* pswd);
 
-void server_handle(uint8_t* uart_receive, Scrolling_text *scrolling_text);
+void server_handle(char* uart_receive, Scrolling_text *scrolling_text);
 
 #endif /* INC_ESP01_H_ */

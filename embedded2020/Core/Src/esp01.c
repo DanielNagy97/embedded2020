@@ -75,7 +75,8 @@ char* esp_init(char* ssid, char* pswd){
 
 	  /* Resetting the esp-01 */
 	  send_uart("AT+RST\r\n", 1000);
-	  HAL_Delay(2000);
+	  scroll_text_left("Boot...", 30, 0, 3);
+	  HAL_Delay(1000);
 
 	  /* AT OK? */
 	  send_uart("AT\r\n", 1000);
@@ -115,14 +116,14 @@ char* esp_init(char* ssid, char* pswd){
 	  return ip_address;
 }
 
-void server_handle(uint8_t* uart_receive, Scrolling_text *scrolling_text){
+void server_handle(char* uart_receive, Scrolling_text *scrolling_text){
 	/**
 	  * @brief Running the server
 	  * @see sudo tcpdump host <ip-of-esp> -v
 	  * @return None
 	  */
-	  if(strstr((char*)uart_receive, "GET")){
-		  char *link_id = strstr((char*)uart_receive, "+IPD,");
+	  if(strstr(uart_receive, "GET")){
+		  char *link_id = strstr(uart_receive, "+IPD,");
 		  if(link_id != NULL) {
 			  link_id = strtok(link_id, ",");
 			  link_id = strtok(NULL, ",");
@@ -141,8 +142,8 @@ void server_handle(uint8_t* uart_receive, Scrolling_text *scrolling_text){
 
 		  }
 	  }
-	  else if(strstr((char*)uart_receive, "POST")){
-		  char* message = strstr((char*)uart_receive, "+MSG~");
+	  else if(strstr(uart_receive, "POST")){
+		  char* message = strstr(uart_receive, "+MSG~");
 		  if(message != NULL) {
 			  message = strtok(message, "~");
 			  int times = atoi(strtok(NULL, "~"));
@@ -155,7 +156,7 @@ void server_handle(uint8_t* uart_receive, Scrolling_text *scrolling_text){
 			  scrolling_message.char_index = 0;
 			  strcpy(scrolling_message.text, message);
 
-			  if(intensity <= 7){
+			  if(intensity <= 7 && intensity >= 0){
 				  set_intensity((uint8_t)intensity);
 			  }
 

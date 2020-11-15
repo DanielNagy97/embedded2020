@@ -69,7 +69,9 @@ static void MX_TIM3_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-uint8_t receive_it[600] = {0};
+uint8_t receive_it[1] = {0};
+
+char receive_buffer[1000] = {0};
 
 //char receive_buffer[1000] = {0};
 
@@ -125,12 +127,13 @@ int main(void)
   //An alarm can be used for clock synchronisation (every midnight, or something..)
 
   /* Initial values for the time and date */
-  RTC_TimeTypeDef currTime = {9, 2, 0};
-  RTC_DateTypeDef currDate = {0, 11, 13, 20};
+  RTC_TimeTypeDef currTime = {15, 11, 0};
+  RTC_DateTypeDef currDate = {6, 11, 15, 20};
   HAL_RTC_SetDate(&hrtc, &currDate, RTC_FORMAT_BIN);
   HAL_RTC_SetTime(&hrtc, &currTime, RTC_FORMAT_BIN);
 
   /* UART RX init*/
+  uart_interrupt_counter = 0;
   HAL_UART_Receive_IT(&huart1, receive_it, 1);
 
   /* USER CODE END 2 */
@@ -140,13 +143,15 @@ int main(void)
   while (1)
   {
 	  /* Parsing the UART-buffer */
-	  //TODO: Concat UART buffer values to an another buffer
-	  if(uart_interrupt && strlen((char*)receive_it) > 1){
+	  /* Somehow only works with Mozilla browsers... */
+	  /* Maybe Chrome sends a GET for the favicon... */
+	  if(uart_interrupt && strlen(receive_buffer) > 1){
 		  HAL_Delay(500); /* Delay for getting all the data from the ESP */
-		  server_handle(receive_it, &scrolling_text);
+		  server_handle(receive_buffer, &scrolling_text);
 	      /* Clearing the buffer */
-		  memset(receive_it, 0, sizeof receive_it);
-		  receive_it[0] = '\0';
+		  //memset(receive_buffer, 0, sizeof receive_buffer);
+		  receive_buffer[0] = '\0';
+		  uart_interrupt_counter = 0;
 
 		  uart_interrupt = 0;
 	  }
