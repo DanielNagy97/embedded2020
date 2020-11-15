@@ -245,7 +245,7 @@ void USART1_IRQHandler(void)
   /* USER CODE BEGIN USART1_IRQn 1 */
 
   	//sprintf(receive_buffer + strlen(receive_buffer), (char*)receive_it);
-  HAL_UART_Receive_IT(&huart1, receive_it, 600);
+  HAL_UART_Receive_IT(&huart1, receive_it, 400);
 
 
   /* USER CODE END USART1_IRQn 1 */

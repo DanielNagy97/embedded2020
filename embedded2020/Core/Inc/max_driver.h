@@ -26,7 +26,9 @@ void write_max_cmd (uint8_t address, uint8_t cmd);
 
 void max_clear();
 
-void max_init (uint8_t brightness);
+void set_intensity(uint8_t intensity);
+
+void max_init (uint8_t intensity);
 
 void set_byte_on_matrix(uint8_t byte, uint8_t row, uint8_t column);
 

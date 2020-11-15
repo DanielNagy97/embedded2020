@@ -108,29 +108,29 @@ int main(void)
   MX_TIM4_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
-  max_init(0x01);
+  max_init(0x00);
 
   HAL_TIM_Base_Start_IT(&htim4); /* Scrolling text timer*/
   HAL_TIM_Base_Start_IT(&htim3); /* Clock face timer*/
 
+  Scrolling_text scrolling_text = {};
+  scrolling_text.times = 3; /* 1-10 */
+  scrolling_text.char_column = -1;
+  scrolling_text.char_index = 0;
+
+  char* device_ip = esp_init("ssid", "pswd");
+  sprintf(scrolling_text.text, device_ip);
+
   //TODO: Get the time from the web!
   //An alarm can be used for clock synchronisation (every midnight, or something..)
+
   /* Initial values for the time and date */
   RTC_TimeTypeDef currTime = {9, 2, 0};
   RTC_DateTypeDef currDate = {0, 11, 13, 20};
   HAL_RTC_SetDate(&hrtc, &currDate, RTC_FORMAT_BIN);
   HAL_RTC_SetTime(&hrtc, &currTime, RTC_FORMAT_BIN);
 
-  Scrolling_text scrolling_text = {};
-  scrolling_text.times = 3; /* max value should be 10 (on frontend)*/
-  scrolling_text.char_column = -1;
-  scrolling_text.char_index = 0;
-
-  //sprintf(scrolling_text.text, "Nellybaba egy büdös egér");
-
-  char* device_ip = esp_init("ssid", "pswd");
-  sprintf(scrolling_text.text, device_ip);
-
+  /* UART RX init*/
   HAL_UART_Receive_IT(&huart1, receive_it, 1);
 
   /* USER CODE END 2 */
@@ -140,17 +140,13 @@ int main(void)
   while (1)
   {
 	  /* Parsing the UART-buffer */
-	  //NOTE: Bug: after POST you have to reload the new page twice
-	  //Maybe the POST generating an another request...
+	  //TODO: Concat UART buffer values to an another buffer
 	  if(uart_interrupt && strlen((char*)receive_it) > 1){
-		  HAL_Delay(500);
-		  char* msg = server_handle(receive_it);
-		  if(strlen(msg) != 0){
-			  sprintf(scrolling_text.text, msg);
-			  scrolling_text.times = 3;
-			  scrolling_text.char_column = -1;
-			  scrolling_text.char_index = 0;
-		  }
+		  HAL_Delay(500); /* Delay for getting all the data from the ESP */
+		  server_handle(receive_it, &scrolling_text);
+	      /* Clearing the buffer */
+		  memset(receive_it, 0, sizeof receive_it);
+		  receive_it[0] = '\0';
 
 		  uart_interrupt = 0;
 	  }
@@ -175,9 +171,6 @@ int main(void)
 		  }
 		  update_clock = 0;
 	  }
-
-	  /* Changing the timer runtime:
-	   * TIM4->PSC = 99;*/
 
     /* USER CODE END WHILE */
 

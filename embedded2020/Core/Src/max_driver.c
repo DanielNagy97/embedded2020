@@ -53,7 +53,16 @@ void max_clear(){
 	}
 }
 
-void max_init (uint8_t brightness){
+void set_intensity(uint8_t intensity){
+	/**
+	  * @brief Setting the intensity register of the MAX7219
+	  * @param intensity from 0-7 as uint8_t
+	  * @return None
+	  */
+	write_max_cmd(0x0a, intensity);
+}
+
+void max_init (uint8_t intensity){
 	/**
 	  * @brief Initialising the MAX7219 led drivers
 	  * @param brightness The intensity of the screen as uint8_t
@@ -64,7 +73,7 @@ void max_init (uint8_t brightness){
 	write_max_cmd(0x0b, 0x07); /* scan limit = 8 */
 	write_max_cmd(0x0c, 0x01); /* mode = 1 */
 	write_max_cmd(0x0f, 0x00); /* test display = 0 */
-	write_max_cmd(0x0a, brightness);
+	set_intensity(intensity);
 }
 
 void set_byte_on_matrix(uint8_t byte, uint8_t row, uint8_t column){

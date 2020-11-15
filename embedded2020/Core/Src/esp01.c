@@ -16,39 +16,49 @@ char* webpage = "HTTP/1.1 200 OK\n\
 Content-Type: text/html\n\
 Connection: close\n\n\
 <!DOCTYPE html>\n\
-<html>\n\
-<head>\n\
-<link rel=\"shortcut icon\" href=\"\" />\
-<meta charset=\"UTF-8\">\
-<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=no\">\n\
-<style>body{text-align:center;margin:100px 10% 200px 10%;}\n\
-#cont1{padding:10px;box-shadow:9px 9px 17px 0px rgba(50, 50, 50, 0.75);\n\
-background:lightgrey;font-size:30px;}\n\
-input{width:90%;font-size:20px;margin-top:40px;margin-bottom:10px;}\n\
-button{position:relative;background-color:grey;border:none;font-size:16px;\n\
-color:white;padding:20px;width:150px;text-align:center;transition-duration:0.4s;\n\
-text-decoration:none;overflow:hidden;cursor:pointer;}\n\
-button:after{content:\"\";background:#f1f1f1;display:block;position:absolute;\n\
-padding-top:300%;padding-left:350%;margin-left:-20px !important;margin-top:-120%;\n\
-opacity:0;transition:all 0.8s}\n\
-button:active:after{padding:0;margin:0;opacity:1;transition:0s}</style>\n\
+<html><head><link rel=\"shortcut icon\" href=\"\" /><meta charset=\"UTF-8\" />\n\
+<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=no\" />\n\
+<style>\n\
+body{text-align:center;margin:100px 10% 0px 10%;background:GhostWhite;}\n\
+#cont1{padding:10px;box-shadow:9px 9px 17px 0px rgba(50, 50, 50, 0.75);background:#DCDCDC;}\n\
+input{box-sizing:border-box;background:white;width:100%;font-size:20px;height:40px;margin-bottom:5px;}\n\
+input[type=number]{width:100px;height:61px;text-align:center;font-size:26px;}\n\
+td{text-align:right;font-size:20px;}\n\
+.ri{text-align:left;}\n\
+#btn{float:right;background:#778899;border:none;font-size:16px;color:white;padding:20px;width:150px;text-align:center;text-decoration:none;}\n\
+.btn:active{background:silver;}\n\
+</style>\n\
 <script>\n\
-function sendTxt() {\n\
+function sendTxt(){\n\
 var x=document.getElementById(\"TXT\").value;\n\
+var t=document.getElementById(\"TIM\").value;\n\
+var i=document.getElementById(\"INT\").value;\n\
 var url=document.URL;\n\
-var msg=\"+MSG~\"+x+\"~\";\n\
+var msg=\"+MSG~\"+t+\"~\"+i+\"~\"+x+\"~\";\n\
 var xhr=new XMLHttpRequest();\n\
 xhr.open(\"POST\",url,true);\n\
-xhr.send(msg);\n\
-}\n\
-</script>\n</head>\n\
+xhr.send(msg);}\n\
+</script>\n\
+</head>\n\
+<br />\n\
 <body>\n\
 <div id=\"cont1\">\n\
-STM32 Clock\n\
-<br>\n\
-<input type=\"text\" id=\"TXT\" value=\"\">\n\
-</br>\n\
-<button onclick=\"sendTxt()\">Send text</button>\n\
+<h2>STM32 Clock</h2>\n\
+<br />\n\
+<input type=\"text\" id=\"TXT\" value=\"\" />\n\
+<br />\n\
+<table style=\"width:100%\">\n\
+  <tr>\n\
+    <td class=\"ri\">Times:</td>\n\
+    <td><input type=\"number\" id=\"TIM\" value=\"1\" min=\"1\" max=\"10\"/></td>\n\
+  </tr>\n\
+  <tr>\n\
+    <td class=\"ri\">Intensity:</td>\n\
+    <td><input type=\"number\" id=\"INT\" value=\"1\" min=\"1\" max=\"8\"/></td>\n\
+  </tr>\n\
+</table>\n\
+<button id=\"btn\" onclick=\"sendTxt()\">Send text</button>\n\
+<br style=\"clear:both;\" />\n\
 </div>\n\
 </body>\n\
 </html>\n\r\n";
@@ -105,7 +115,7 @@ char* esp_init(char* ssid, char* pswd){
 	  return ip_address;
 }
 
-char* server_handle(uint8_t* uart_receive){
+void server_handle(uint8_t* uart_receive, Scrolling_text *scrolling_text){
 	/**
 	  * @brief Running the server
 	  * @see sudo tcpdump host <ip-of-esp> -v
@@ -129,24 +139,27 @@ char* server_handle(uint8_t* uart_receive){
 		      send_uart("AT+CIPCLOSE=0\r\n", 2000);
 		      //uart_waitfor("OK", 5, 1000);
 
-		      /* Deleting the buffer */
-		      uart_receive[0] = '\0';
 		  }
 	  }
 	  else if(strstr((char*)uart_receive, "POST")){
 		  char* message = strstr((char*)uart_receive, "+MSG~");
 		  if(message != NULL) {
 			  message = strtok(message, "~");
+			  int times = atoi(strtok(NULL, "~"));
+			  int intensity = atoi(strtok(NULL, "~"))-1;
 			  message = strtok(NULL, "~");
 
-		      /* Deleting the buffer */
-			  uart_receive[0] = '\0';
+			  Scrolling_text scrolling_message = {};
+			  scrolling_message.times = times; /* 1-10 */
+			  scrolling_message.char_column = -1;
+			  scrolling_message.char_index = 0;
+			  strcpy(scrolling_message.text, message);
 
-			  return message;
-		  }
+			  if(intensity <= 7){
+				  set_intensity((uint8_t)intensity);
+			  }
+
+			  *scrolling_text = scrolling_message;
+		 }
 	  }
-	  else{
-		  uart_receive[0] = '\0';
-	  }
-	  return NULL;
 }
