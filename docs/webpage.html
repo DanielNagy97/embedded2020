@@ -53,11 +53,12 @@ background:silver;
 </style>
 <script>
 function sendTxt() {
+var d=new Date();
 var x=document.getElementById("TXT").value;
 var t=document.getElementById("TIM").value;
 var i=document.getElementById("INT").value;
 var url=document.URL;
-var msg="+MSG~"+t+"~"+i+"~"+x+"~";
+var msg="+MSG~"+t+"~"+i+"~"+x+"~"+d.getDay()+"~"+d.getMonth()+"~"+d.getDate()+"~"+d.getFullYear()+"~"+d.getHours()+"~"+d.getMinutes()+"~"+d.getSeconds();
 var xhr=new XMLHttpRequest();
 xhr.open("POST",url,true);
 xhr.send(msg);

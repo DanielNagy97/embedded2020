@@ -12,6 +12,8 @@
 
 #include "esp01.h"
 
+extern RTC_HandleTypeDef hrtc;
+
 char* webpage = "HTTP/1.1 200 OK\n\
 Content-Type: text/html\n\
 Connection: close\n\n\
@@ -30,11 +32,12 @@ td{text-align:right;font-size:20px;}\n\
 </style>\n\
 <script>\n\
 function sendTxt(){\n\
+var d=new Date();\n\
 var x=document.getElementById(\"TXT\").value;\n\
 var t=document.getElementById(\"TIM\").value;\n\
 var i=document.getElementById(\"INT\").value;\n\
 var url=document.URL;\n\
-var msg=\"+MSG~\"+t+\"~\"+i+\"~\"+x+\"~\";\n\
+var msg=\"+MSG~\"+t+\"~\"+i+\"~\"+x+\"~\"+d.getDay()+\"~\"+d.getMonth()+\"~\"+d.getDate()+\"~\"+d.getFullYear()+\"~\"+d.getHours()+\"~\"+d.getMinutes()+\"~\"+d.getSeconds()+\"~\";\n\
 var xhr=new XMLHttpRequest();\n\
 xhr.open(\"POST\",url,true);\n\
 xhr.send(msg);}\n\
@@ -148,8 +151,23 @@ void server_handle(char* uart_receive, Scrolling_text *scrolling_text){
 		  if(message != NULL) {
 			  message = strtok(message, "~");
 			  int times = atoi(strtok(NULL, "~"));
-			  int intensity = atoi(strtok(NULL, "~"))-1;
+			  int intensity = atoi(strtok(NULL, "~"));
+			  intensity -= 1;
 			  message = strtok(NULL, "~");
+
+			  /* Getting the date out of the message */
+			  int day = atoi(strtok(NULL, "~"));
+			  int month = atoi(strtok(NULL, "~"));
+			  int date = atoi(strtok(NULL, "~"));
+			  int year = atoi(strtok(NULL, "~"));
+			  int hours = atoi(strtok(NULL, "~"));
+			  int minutes = atoi(strtok(NULL, "~"));
+			  int seconds = atoi(strtok(NULL, "~"));
+			  /* Setting time */
+			  RTC_TimeTypeDef currTime = {hours, minutes, seconds};
+			  RTC_DateTypeDef currDate = {day, month+1, date, year-2000};
+			  HAL_RTC_SetDate(&hrtc, &currDate, RTC_FORMAT_BIN);
+			  HAL_RTC_SetTime(&hrtc, &currTime, RTC_FORMAT_BIN);
 
 			  Scrolling_text scrolling_message = {};
 			  scrolling_message.times = times; /* 1-10 */

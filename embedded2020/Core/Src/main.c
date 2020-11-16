@@ -123,11 +123,8 @@ int main(void)
   char* device_ip = esp_init("ssid", "pswd");
   sprintf(scrolling_text.text, device_ip);
 
-  //TODO: Get the time from the web!
-  //An alarm can be used for clock synchronisation (every midnight, or something..)
-
   /* Initial values for the time and date */
-  RTC_TimeTypeDef currTime = {15, 11, 0};
+  RTC_TimeTypeDef currTime = {0, 0, 0};
   RTC_DateTypeDef currDate = {6, 11, 15, 20};
   HAL_RTC_SetDate(&hrtc, &currDate, RTC_FORMAT_BIN);
   HAL_RTC_SetTime(&hrtc, &currTime, RTC_FORMAT_BIN);

@@ -67,10 +67,15 @@ char* get_date_string(RTC_DateTypeDef* currDate){
 	  * @return date_buffer The date string as char*
 	  */
 	static char date_buffer[11] = {0};
-	sprintf(date_buffer, "%d.%02d.%02d.",
+
+	char* week_days[7] = {"Hétfő", "Kedd", "Szerda",
+			"Csütörtök", "Péntek", "Szombat", "Vasárnap"};
+
+	sprintf(date_buffer, "%d.%02d.%02d. %s",
 			currDate->Year+2000,
 			currDate->Month,
-			currDate->Date);
+			currDate->Date,
+			week_days[currDate->WeekDay-1]);
 
 	return date_buffer;
 }
