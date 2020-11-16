@@ -240,21 +240,15 @@ void USART1_IRQHandler(void)
 {
   /* USER CODE BEGIN USART1_IRQn 0 */
 	uart_interrupt = 1;
-	if(uart_interrupt_counter == 0){
-		strcpy(receive_buffer, (char*)receive_it);
-	}
-	else{
-		strcat(receive_buffer, (char*)receive_it);
-	}
+
+	receive_buffer[uart_interrupt_counter] = receive_it[0];
 
 	uart_interrupt_counter++;
   /* USER CODE END USART1_IRQn 0 */
   HAL_UART_IRQHandler(&huart1);
   /* USER CODE BEGIN USART1_IRQn 1 */
 
-  	//sprintf(receive_buffer + strlen(receive_buffer), (char*)receive_it);
   HAL_UART_Receive_IT(&huart1, receive_it, 1);
-
 
   /* USER CODE END USART1_IRQn 1 */
 }

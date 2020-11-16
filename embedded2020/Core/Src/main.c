@@ -143,14 +143,13 @@ int main(void)
   while (1)
   {
 	  /* Parsing the UART-buffer */
-	  /* Somehow only works with Mozilla browsers... */
-	  /* Maybe Chrome sends a GET for the favicon... */
-	  if(uart_interrupt && strlen(receive_buffer) > 1){
+	  /* BUG: The very first request gets thrown away... */
+	  if(uart_interrupt && uart_interrupt_counter > 1){
 		  HAL_Delay(500); /* Delay for getting all the data from the ESP */
 		  server_handle(receive_buffer, &scrolling_text);
 	      /* Clearing the buffer */
-		  //memset(receive_buffer, 0, sizeof receive_buffer);
-		  receive_buffer[0] = '\0';
+		  memset(receive_buffer, 0, sizeof receive_buffer);
+		  //receive_buffer[0] = '\0';
 		  uart_interrupt_counter = 0;
 
 		  uart_interrupt = 0;

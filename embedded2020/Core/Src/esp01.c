@@ -75,7 +75,7 @@ char* esp_init(char* ssid, char* pswd){
 
 	  /* Resetting the esp-01 */
 	  send_uart("AT+RST\r\n", 1000);
-	  scroll_text_left("Boot...", 30, 0, 3);
+	  scroll_text_left("Boot...", 30, 0, 2);
 	  HAL_Delay(1000);
 
 	  /* AT OK? */
@@ -132,13 +132,14 @@ void server_handle(char* uart_receive, Scrolling_text *scrolling_text){
 		      char data[30];
 		      sprintf (data, "AT+CIPSEND=%s,%d\r\n", link_id, len);
 		      send_uart(data, 1000);
-		      HAL_Delay(500);
+		      HAL_Delay(100);
 		      //uart_waitfor(">", 5, 1000); /* The AT prompt */
 		      send_uart(webpage, 5000);
 		      HAL_Delay(500);
 		      //uart_waitfor("SEND OK", 5, 1000);
 		      send_uart("AT+CIPCLOSE=0\r\n", 2000);
 		      //uart_waitfor("OK", 5, 1000);
+		      HAL_Delay(500);
 
 		  }
 	  }
