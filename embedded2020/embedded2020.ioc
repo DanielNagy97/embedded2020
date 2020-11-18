@@ -1,5 +1,6 @@
 #MicroXplorer Configuration settings - do not modify
 File.Version=6
+GPIO.groupedBy=Group By Peripherals
 KeepUserPlacement=false
 Mcu.Family=STM32F1
 Mcu.IP0=NVIC
@@ -130,8 +131,9 @@ RCC.TimSysFreq_Value=72000000
 RCC.USBFreq_Value=72000000
 RCC.VCOOutput2Freq_Value=8000000
 RTC.Date=9
+RTC.Format=RTC_FORMAT_BIN
 RTC.Hours=16
-RTC.IPParameters=Hours,Minutes,Month,Date,Year
+RTC.IPParameters=Hours,Minutes,Month,Date,Year,Format
 RTC.Minutes=24
 RTC.Month=RTC_MONTH_NOVEMBER
 RTC.Year=20

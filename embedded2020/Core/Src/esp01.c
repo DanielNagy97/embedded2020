@@ -18,7 +18,9 @@ char* webpage = "HTTP/1.1 200 OK\n\
 Content-Type: text/html\n\
 Connection: close\n\n\
 <!DOCTYPE html>\n\
-<html><head><link rel=\"shortcut icon\" href=\"\" /><meta charset=\"UTF-8\" />\n\
+<html><head>\
+<link rel=\"icon\" href=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAS0lEQVR42s2SMQ4AIAjE+P+ncSYdasgNXMJgcyIIlVKPIKdvioAXyWBeJmVpqRZKWtj9QWAKZyWll50b8IcL9JUeQF50n28ckyb0ADG8RLwp05YBAAAAAElFTkSuQmCC\" type=\"image/x-png\" />\n\
+<meta charset=\"UTF-8\" />\n\
 <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=no\" />\n\
 <style>\n\
 body{text-align:center;margin:100px 10% 0px 10%;background:GhostWhite;}\n\
@@ -37,13 +39,12 @@ var x=document.getElementById(\"TXT\").value;\n\
 var t=document.getElementById(\"TIM\").value;\n\
 var i=document.getElementById(\"INT\").value;\n\
 var url=document.URL;\n\
-var msg=\"+MSG~\"+t+\"~\"+i+\"~\"+x+\"~\"+d.getDay()+\"~\"+d.getMonth()+\"~\"+d.getDate()+\"~\"+d.getFullYear()+\"~\"+d.getHours()+\"~\"+d.getMinutes()+\"~\"+d.getSeconds()+\"~\";\n\
+var msg=\"+MSG~\"+t+\"~\"+i+\"~\"+d.getDay()+\"~\"+d.getMonth()+\"~\"+d.getDate()+\"~\"+d.getFullYear()+\"~\"+d.getHours()+\"~\"+d.getMinutes()+\"~\"+d.getSeconds()+\"~\"+x+\"~\";\n\
 var xhr=new XMLHttpRequest();\n\
 xhr.open(\"POST\",url,true);\n\
 xhr.send(msg);}\n\
 </script>\n\
 </head>\n\
-<br />\n\
 <body>\n\
 <div id=\"cont1\">\n\
 <h2>STM32 Clock</h2>\n\
@@ -51,14 +52,14 @@ xhr.send(msg);}\n\
 <input type=\"text\" id=\"TXT\" value=\"\" />\n\
 <br />\n\
 <table style=\"width:100%\">\n\
-  <tr>\n\
-    <td class=\"ri\">Times:</td>\n\
-    <td><input type=\"number\" id=\"TIM\" value=\"1\" min=\"1\" max=\"10\"/></td>\n\
-  </tr>\n\
-  <tr>\n\
-    <td class=\"ri\">Intensity:</td>\n\
-    <td><input type=\"number\" id=\"INT\" value=\"1\" min=\"1\" max=\"8\"/></td>\n\
-  </tr>\n\
+<tr>\n\
+<td class=\"ri\">Scroll (1-10):</td>\n\
+<td><input type=\"number\" id=\"TIM\" value=\"1\" min=\"1\" max=\"10\"/></td>\n\
+</tr>\n\
+<tr>\n\
+<td class=\"ri\">Intensity (1-8):</td>\n\
+<td><input type=\"number\" id=\"INT\" value=\"1\" min=\"1\" max=\"8\"/></td>\n\
+</tr>\n\
 </table>\n\
 <button id=\"btn\" onclick=\"sendTxt()\">Send text</button>\n\
 <br style=\"clear:both;\" />\n\
@@ -142,8 +143,6 @@ void server_handle(char* uart_receive, Scrolling_text *scrolling_text){
 		      //uart_waitfor("SEND OK", 5, 1000);
 		      send_uart("AT+CIPCLOSE=0\r\n", 2000);
 		      //uart_waitfor("OK", 5, 1000);
-		      HAL_Delay(500);
-
 		  }
 	  }
 	  else if(strstr(uart_receive, "POST")){
@@ -153,7 +152,6 @@ void server_handle(char* uart_receive, Scrolling_text *scrolling_text){
 			  int times = atoi(strtok(NULL, "~"));
 			  int intensity = atoi(strtok(NULL, "~"));
 			  intensity -= 1;
-			  message = strtok(NULL, "~");
 
 			  /* Getting the date out of the message */
 			  int day = atoi(strtok(NULL, "~"));
@@ -163,6 +161,9 @@ void server_handle(char* uart_receive, Scrolling_text *scrolling_text){
 			  int hours = atoi(strtok(NULL, "~"));
 			  int minutes = atoi(strtok(NULL, "~"));
 			  int seconds = atoi(strtok(NULL, "~"));
+
+			  message = strtok(NULL, "~");
+
 			  /* Setting time */
 			  RTC_TimeTypeDef currTime = {hours, minutes, seconds};
 			  RTC_DateTypeDef currDate = {day, month+1, date, year-2000};

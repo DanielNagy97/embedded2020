@@ -140,9 +140,8 @@ int main(void)
   while (1)
   {
 	  /* Parsing the UART-buffer */
-	  /* BUG: The very first request gets thrown away... */
 	  if(uart_interrupt && uart_interrupt_counter > 1){
-		  HAL_Delay(500); /* Delay for getting all the data from the ESP */
+		  HAL_Delay(200); /* Delay for getting all the data from the ESP */
 		  server_handle(receive_buffer, &scrolling_text);
 	      /* Clearing the buffer */
 		  memset(receive_buffer, 0, sizeof receive_buffer);
@@ -260,20 +259,20 @@ static void MX_RTC_Init(void)
 
   /** Initialize RTC and set the Time and Date
   */
-  sTime.Hours = 0x16;
-  sTime.Minutes = 0x24;
-  sTime.Seconds = 0x0;
+  sTime.Hours = 16;
+  sTime.Minutes = 24;
+  sTime.Seconds = 0;
 
-  if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
+  if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) != HAL_OK)
   {
     Error_Handler();
   }
   DateToUpdate.WeekDay = RTC_WEEKDAY_MONDAY;
   DateToUpdate.Month = RTC_MONTH_NOVEMBER;
-  DateToUpdate.Date = 0x9;
-  DateToUpdate.Year = 0x20;
+  DateToUpdate.Date = 9;
+  DateToUpdate.Year = 20;
 
-  if (HAL_RTC_SetDate(&hrtc, &DateToUpdate, RTC_FORMAT_BCD) != HAL_OK)
+  if (HAL_RTC_SetDate(&hrtc, &DateToUpdate, RTC_FORMAT_BIN) != HAL_OK)
   {
     Error_Handler();
   }

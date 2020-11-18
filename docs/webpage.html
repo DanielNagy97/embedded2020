@@ -1,89 +1,91 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-<link rel="shortcut icon" href="" />
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-<style>
-body{
-text-align:center;
-margin:100px 10% 0px 10%;
-background:GhostWhite;
-}
-#cont1{
-padding:10px;
-box-shadow:9px 9px 17px 0px rgba(50, 50, 50, 0.75);
-background:#DCDCDC;
-}
-input{
-box-sizing:border-box;
-background:white;
-width:100%;
-font-size:20px;
-height:40px;
-margin-bottom:5px;
-}
-input[type=number]{
-width:100px;
-height:61px;
-text-align:center;
-font-size:26px;
-}
-td{
-text-align:right;
-font-size:20px;
-}
-.ri{
-text-align:left;
-}
-#btn{
-float:right;
-background:#778899;
-border:none;
-font-size:16px;
-color:white;
-padding:20px;
-width:150px;
-text-align:center;
-text-decoration:none;
-}
-.btn:active{
-background:silver;
-}
-</style>
-<script>
-function sendTxt() {
-var d=new Date();
-var x=document.getElementById("TXT").value;
-var t=document.getElementById("TIM").value;
-var i=document.getElementById("INT").value;
-var url=document.URL;
-var msg="+MSG~"+t+"~"+i+"~"+x+"~"+d.getDay()+"~"+d.getMonth()+"~"+d.getDate()+"~"+d.getFullYear()+"~"+d.getHours()+"~"+d.getMinutes()+"~"+d.getSeconds();
-var xhr=new XMLHttpRequest();
-xhr.open("POST",url,true);
-xhr.send(msg);
-}
-</script>
+    <link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAS0lEQVR42s2SMQ4AIAjE+P+ncSYdasgNXMJgcyIIlVKPIKdvioAXyWBeJmVpqRZKWtj9QWAKZyWll50b8IcL9JUeQF50n28ckyb0ADG8RLwp05YBAAAAAElFTkSuQmCC" type="image/x-png" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <style>
+        body{
+            text-align:center;
+            margin:100px 10% 0px 10%;
+            background:GhostWhite;
+        }
+        #cont1{
+            padding:10px;
+            box-shadow:9px 9px 17px 0px rgba(50, 50, 50, 0.75);
+            background:#DCDCDC;
+        }
+        input{
+            box-sizing:border-box;
+            background:white;
+            width:100%;
+            font-size:20px;
+            height:40px;
+            margin-bottom:5px;
+        }
+        input[type=number]{
+            width:100px;
+            height:61px;
+            text-align:center;
+            font-size:26px;
+        }
+        td{
+            text-align:right;
+            font-size:20px;
+        }
+        .ri{
+            text-align:left;
+        }
+        #btn{
+            float:right;
+            background:#778899;
+            border:none;
+            font-size:16px;
+            color:white;
+            padding:20px;
+            width:150px;
+            text-align:center;
+            text-decoration:none;
+        }
+        .btn:active{
+            background:silver;
+        }
+    </style>
+    <script>
+        function sendTxt(){
+        var d = new Date();
+        var x = document.getElementById("TXT").value;
+        var t = document.getElementById("TIM").value;
+        var i = document.getElementById("INT").value;
+        var url = document.URL;
+        var msg = "+MSG~"+t+"~"+i+"~"+d.getDay()+"~"+d.getMonth()+"~"+d.getDate()+"~"+d.getFullYear()+"~"+d.getHours()+"~"+d.getMinutes()+"~"+d.getSeconds()+"~"+x+"~";
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST",url,true);
+        xhr.send(msg);
+        }
+    </script>
 </head>
-<br />
+
 <body>
-<div id="cont1">
-<h2>STM32 Clock</h2>
-<br />
-<input type="text" id="TXT" value="" />
-<br />
-<table style="width:100%">
-  <tr>
-    <td class="ri">Times:</td>
-    <td><input type="number" id="TIM" value="1" min="1" max="10"/></td>
-  </tr>
-  <tr>
-    <td class="ri">Intensity:</td>
-    <td><input type="number" id="INT" value="1" min="1" max="8"/></td>
-  </tr>
-</table>
-<button id="btn" onclick="sendTxt()">Send text</button>
-<br style="clear:both;" />
-</div>
+    <div id="cont1">
+    <h2>STM32 Clock</h2>
+    <br />
+    <input type="text" id="TXT" value="" />
+    <br />
+    <table style="width:100%">
+      <tr>
+        <td class="ri">Scroll (1-10):</td>
+        <td><input type="number" id="TIM" value="1" min="1" max="10"/></td>
+      </tr>
+      <tr>
+        <td class="ri">Intensity (1-8):</td>
+        <td><input type="number" id="INT" value="1" min="1" max="8"/></td>
+      </tr>
+    </table>
+    <button id="btn" onclick="sendTxt()">Send text</button>
+    <br style="clear:both;" />
+    </div>
 </body>
+
 </html>

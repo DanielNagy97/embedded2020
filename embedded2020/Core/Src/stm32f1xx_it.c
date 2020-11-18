@@ -63,7 +63,7 @@ extern TIM_HandleTypeDef htim4;
 extern UART_HandleTypeDef huart1;
 /* USER CODE BEGIN EV */
 
-extern uint8_t receive_it[1];
+extern uint8_t receive_it;
 extern char receive_buffer[1000];
 
 //extern char receive_buffer[1000];
@@ -241,14 +241,14 @@ void USART1_IRQHandler(void)
   /* USER CODE BEGIN USART1_IRQn 0 */
 	uart_interrupt = 1;
 
-	receive_buffer[uart_interrupt_counter] = receive_it[0];
-
-	uart_interrupt_counter++;
   /* USER CODE END USART1_IRQn 0 */
   HAL_UART_IRQHandler(&huart1);
   /* USER CODE BEGIN USART1_IRQn 1 */
+	receive_buffer[uart_interrupt_counter] = receive_it;
 
-  HAL_UART_Receive_IT(&huart1, receive_it, 1);
+	uart_interrupt_counter++;
+
+  HAL_UART_Receive_IT(&huart1, &receive_it, 1);
 
   /* USER CODE END USART1_IRQn 1 */
 }
