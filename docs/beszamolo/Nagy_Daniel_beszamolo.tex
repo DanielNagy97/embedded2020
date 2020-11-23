@@ -35,6 +35,12 @@
 A féléves beadandó feladatomnak egy óra elkészítését választottam.
 Az eszköz egy LED mátrix kijelzőn a pontos időt mutatja. A kijelzőn minden harmincadik másodpercben csúszó szövegkként megjelenik a napi dátum és az aktuális napnak a neve. A felhasználónak lehetősége van szöveget küldeni az eszköznek. Ezt az eszköz által szolgáltatott weboldalon teheti meg. A szöveg a kijelzőn annyiszor csúszik végig amennyiszer azt a felhasználó beállította. A weboldalon lehetőségünk van a kijelző fényerejét is konfigurálni.
 
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width = 9cm]{images/vinyl_clock.JPG}
+	\caption{Fénykép az elkészült feladatról}
+	\label{fig:product}
+\end{figure}	
 
 \section{Működés}
 
@@ -55,7 +61,15 @@ Példa egy G betű képére:
 0 1 1 1 0\\
 0 0 0 0 0}
 \end{center}
-A fenti példából látható, hogy a betű képét egy $5\times 8$-as bináris mátrixxal írhatjuk le. A karaktereket állítva rajzoltam meg.
+A fenti példából látható, hogy a betű képét egy $5\times 8$-as bináris mátrixxal írhatjuk le. A karaktereket állítva rajzoltam meg. A legalsó sor a legtöbb esetben üres, így a betűk maximum 7 egység magasak.
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width = 10cm]{images/hetfo.JPG}
+	\caption{Hétfő - csúszás közben}
+	\label{fig:hetfo}
+\end{figure}	
+
 
 A karakterek azonosítása az ASCII karakterkódjaik alapján történik. Mivel nem definiáltam a teljes ASCII karakterkészletet, így bizonyos esetekben az üres helyek miatt ki kell vonni a karakterkódból a kihagyott karakterszám értékét, hogy megkapjuk a keresett karakter képének az indexét.
 Ha a soron következő karakter ASCII kódja 32 és 90 közé esik, akkor 32-t kell levonni. Ha pedig 97 és 122 közé esik, akkor 38-at. A nem definiált karakterek helyett egy * képét illeszti.
@@ -81,34 +95,36 @@ A szöveget a képernyő jobboldaláról csúsztatjuk balra.
 A fenti eljárásban a $t$ értéke tetszőleges lehet. Minél kisebb a várakozási idő, annál gyorsabban fog a kiírandó szöveg csúszni a képernyőn.
 
 \subsubsection{Az óra számlapja}
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width = 10cm]{images/clockface.JPG}
+	\caption{Fénykép az óra számlapjáról}
+	\label{fig:clockface}
+\end{figure}	
+
 Az óra számlapjának megjelenítéséhez szintén a kijelzőt reprezentáló mátrixot manipuláljuk.
 Ebben az esetben fix pozíciókat használunk és a megjelenítendő számjegyek mátrixképei azonos szélességűek.
 Az óra számjegyeihez egy külön karakterkészletet definiáltam, amelyek 0-9 reprezentálják a számokat. Ennek csupán esztétikai jelentősége van, a számjegyek a már meglévő karakterektől vastagabbak.
 Az óra számlapja 4 számjegyből áll és a középen elhelyezkedő kettőspontból.
 A 10-nél kissebb számjegyek elég egy nullást illesztünk, hogy a megjelenített kép szimmetrikus legyen.
 
-Példa egy számjegyre:
-
-\begin{center}
-\textbf{0 1 1 1 1 0\\
-1 1 0 0 1 1\\
-0 0 0 0 1 1\\
-0 1 1 1 1 1\\
-1 1 0 0 0 0\\
-1 1 0 0 1 1\\
-1 1 1 1 1 1\\
-0 0 0 0 0 0}
-\end{center}
-
-
 \subsection{Vezetéknélküli kommunikáció}
 Az eszközön megjelenő szöveget saját hálózaton keresztül van lehetőségünk küldeni. Az eszköznek csatlakoznia kell a felhasználó hálózatára. Ezt WIFI kommunikációs protokollon valósul meg. A csatlakozást követően az eszköz a routertől kap egy saját IP címet és a 80-as portján egy HTTP szervert szolgáltat.
 A szerveralkalmazás rendkívül egyszerű. Két kérést vesz vigyelembe: a GET, illetve a POST kéréseket.
 Ezen kérések aszinkron léphetnek fel. Így a kérések beérkezésekor az üzenetet el kell tárolnunk egy \textit{bufferben}. Ha az ütemező a szervernek adja a futási jogot, az a már a buffer tartalmát dolgozza fel.
+A programomban egyetlen buffert használok. Ez problémát jelentene akkor, ha egyszerre több kérés érkezne be. Ilyenkor szerencsésebb lenne egy ún. körkörös buffer használata. De mivel az eszköz otthoni használatra lett tervezve, amelynek hálózatán kevés kliens van jelen, így egy buffer is elegendő a feladathoz.
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width = 7cm]{images/webpage.png}
+	\caption{Képernyőfotó a weblapról (\textit{Mozzilla böngésző, Android})}
+	\label{fig:webpage}
+\end{figure}	
 
 \subsubsection{GET}
 
-GET kérés esetén feltételezhetjük, hogy a kérés a weboldal betöltésére irányul, egy böngészőablakból. A kéréshez minden esetben tartozik egy \textit{link ID} is, vagyis egy azonosító, amely a kiszolgálásra váró klienseket jelöli. A kérés beérkezésekor az eszköz kiküldi a weboldalt a kliensnek. A weboldal tartalma egy inputmező, amleyben a kliensek szöveget írhatnak. Az inputmező alatt a kliens megadhatja, hogy a szövege hányszor csússzon végig a kijelzőn (\textit{Scroll times}), illetve a kijelző fényerejét is beállíthatja (\textit{Intensity} a szövegküldéssel egyidejűleg.
+GET kérés esetén feltételezhetjük, hogy a kérés a weboldal betöltésére irányul, egy böngészőablakból. A kéréshez minden esetben tartozik egy \textit{link ID} is, vagyis egy azonosító, amely a kiszolgálásra váró klienseket jelöli. A kérés beérkezésekor az eszköz kiküldi a weboldalt a kliensnek. A weboldal tartalma egy inputmező, amleyben a kliensek szöveget írhatnak. Az inputmező alatt a kliens megadhatja, hogy a szövege hányszor csússzon végig a kijelzőn (\textit{Scroll times}), illetve a kijelző fényerejét is beállíthatja (\textit{Intensity}) a szövegküldéssel egyidejűleg.
 
 \subsubsection{POST}
 
@@ -130,9 +146,11 @@ Az üzenet tartalma:
  \item A kiírandó szöveg 
 \end{enumerate}
 
-Mint látható, az üzenet tartalmazza a pontos időt és a dátumot is. Vagyis az eszköz belső órájának szinkronizálása az üzenetküldésekkel valósul meg. A kiírandó szöveg az utolsó tagként van jelen az üzenetben. Ennek két oka van: Ha a szöveg nem az utolsó tag lenne és a kliens tilde jeleket is elhelyezne a szövegben, akkor a feldolgozás során nem várt eredmény születne. A másik ok, amiért a szöveg az utolsó tag, mert ilyenkor akár üres szöveget is küldhetünk. Ilyen esetben megvalósul az óra szinkronizációja, beállításra kerül a kijelző fényereje és az eszköznem vált át csúszó szöveges megjelenítésre.
+Mint látható, az üzenet tartalmazza a pontos időt és a dátumot is. Vagyis az eszköz belső órájának szinkronizálása az üzenetküldésekkel valósul meg. A kiírandó szöveg az utolsó tagként van jelen az üzenetben. Ennek két oka van: Ha a szöveg nem az utolsó tag lenne és a kliens tilde jeleket is elhelyezne a szövegben, akkor a feldolgozás során nem várt eredmény születne. A másik ok, amiért a szöveg az utolsó tag, mert ilyenkor akár üres szöveget is küldhetünk. Ilyen esetben megvalósul az óra szinkronizációja, beállításra kerül a kijelző fényereje és az eszköz nem vált át csúszó szöveges megjelenítésre.
 
 \subsection{Időzítők}
+
+Az alábbi időzítők megszakításokat generálnak. A megszakítások jelzésére egy-egy változó szolgál. Ha megszakítás következik be, a megfelelő változó 1-es (igaz) értéket vesz fel. A megszakításokat jelző változóknak az ütemezésnél lesz szerepük.
 
 \subsubsection{Csúszó szöveg időzítő}
 A szöveg kijelzésének folyamatában ismertetett $t$ időegységet jelenti. Megfigyeléseim szerint a 25Hz-es (40ms) időzítés megfelelő eredményt ad. Ezzel az értékkel a szöveg kijelzése se nem lassú, se nem gyors. Így a felhasználónak nincsen lehetősége továbbiakban ezt az értéket konfigurálni.
@@ -149,13 +167,19 @@ Az idő szinkronizációjára egy másik módszer lehet az NTP (\textit{Network 
 Mivel a kliens által küldött időinformáció egyszerűbb és biztosabb, ezért az NPT szerveres szinkronizációt elvetettem.
 
 \subsection{Ütemezés}
-Round-Robin(kerge rigó)
-
+Az ütemezés Round-robin(kerge rigó) alapú. Egy előre meghatározott sorrend alapján működik a rendszer. A prioritási sorrend a következő:
 \begin{enumerate}
 	\item Szerver
-	\item Csúszó szöveg
-	\item Óra számlapja
+	\item Csúszó szöveg frissítés
+	\item Óra számlapjának frissítése
 \end{enumerate}
+Az ütemezésben a különféle megszakításoknak is kulcsszerepük van.
+
+A szerver alkalmazás csak akkor kezdi el feldolgozni a kéréseket tartalmazó buffer tartalmát, ha annak hossza legalább 1. Ha az ütemező neki osztja ki a futási jogot és ez a feltétel teljesül, akkor először is egy kis ideig várakozik, hogy a kérés egésze beérjen a bufferbe. Ehhez egy előre meghatározott késleltetést adtam meg, ami alatt nagy valószínűséggel beérkezik a teljes üzenet. Ezután a buffer tartalmát feldolgozza a program és a tartalma alapján vagy kiszolgálja a klienst vagy lekezeli a POST kérést. Az üzenet feldolgozása után a buffer tartalma törlésre kerül, hossza így 0 lesz, és a következő üzenet beérkezéséig a futási jogot egyből átadja a soron következő kódrészletnek.
+
+Ha az ütemezés a csúszó szöveg frissítésére esik, akkor elsősorban le kell ellenőrizni, hogy van-e kiírandó szöveg. A másik feltétel pedig a szövegfrissítő időzítő megszakításának jelzésének igaz értéke. Ha teljesülnek a feltételek, akkor a már ismertetett módon egy lépéssel frissíti a kijelző mátrixát, hamis értékre állítja a megszakítás jelzésére szolgáló változt és a futási jogot a soron következőnek adja.
+
+Az ütemezés utolsó résztvevője az óra számlap frissítő kódja. Ha az óra számlapjának időzítője megszakítást generált, vagyis a megszakítás figyelő változó igaz értékkel rendelkezik és nincsen kiírandó szöveg, akkor kirajzolódik az óra számlapja. Félpercenként csúsztatni való szöveg is generálódik, amely az aktuális dátumot és a nap nevét tartalmazza. A műveletek végén a megszakítás jelzéséért felelős változót hamisra állítja.
 
 \section{Megvalósítás}
 \subsection{Felhasznált hardverek}
