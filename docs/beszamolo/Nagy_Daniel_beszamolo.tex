@@ -23,6 +23,35 @@
 % Enumeration
 \usepackage{enumitem}
 
+% C code
+\usepackage{xcolor}
+\usepackage{listings}
+
+\definecolor{mGreen}{rgb}{0,0.6,0}
+\definecolor{mGray}{rgb}{0.5,0.5,0.5}
+\definecolor{mPurple}{rgb}{0.58,0,0.82}
+\definecolor{backgroundColour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{CStyle}{
+    backgroundcolor=\color{backgroundColour},   
+    commentstyle=\color{mGreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{mGray},
+    stringstyle=\color{mPurple},
+    basicstyle=\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    language=C
+}
+
 \title{Architektúrák, beágyazott rendszerek (GEVAU218M)\\\LARGE{\textbf{Beszámoló}}\\ \bigskip \Large{\textit{LED mátrix kijelzős óra és szöveg scroller}}}
 \date{2020. november 21.}
 \author{Nagy Dániel Zoltán JJ181J}
@@ -78,7 +107,7 @@ Az ékezetes karakterek már nem alkotnak egybefüggő területet az ASCII kódt
 A képernyőn megjelenő tartalom szintén egy kétdimenziós bináris mátrixalakban írható le. Méretei az egymás után összefűzött cellák által adott felületéből adódnak. Egy 4 cellából álló kijelző esetében a kijelző mérete: $32\times 8$.
 A megjelenítéshez ezt a nagy mátrixot kell manipulálnunk.
 
-\subsubsection{Csúszó szöveg}
+\subsubsection{Csúszó szöveg} \label{csuszo}
 A csúszó szöveg megjelenítése a következő képpen tehető meg:
 Vegyünk egy $n$ karakterből álló szöveget és legyen két mutatónk: $i$, ami a soron következő karakterre mutat és $j$, amely az aktuális karakter mátrix alakjának az oszlopaira mutat. $i = 0$, $j = 0$.
 A szöveget a képernyő jobboldaláról csúsztatjuk balra.
@@ -197,7 +226,129 @@ A kijelző 4 db 8x8-as LED mátrixból áll, amely mögött 4 db MAX7219 LED meg
 A tápegység tulajdonságainak leírása
 
 \subsection{A program}
-A program részletezése
+
+A programot az \textit{STMicroelectronics STM32CubeIDE 1.4.0}-val írtam.
+Az IDE által generált kódokon kívül a következő forrás állományokat hoztam létre:
+\begin{itemize}[noitemsep]
+	\item \texttt{max\_driver.c}
+	\item \texttt{max\_display.c}
+	\item \texttt{scrolling\_text.c}
+	\item \texttt{clock\_face.c}
+	\item \texttt{uart\_handler.c}
+	\item \texttt{esp01.c}
+\end{itemize}
+
+\subsubsection{Megjelenítés}
+
+A \texttt{max\_driver.c} tartalmazza az összes olyan metódust, amelyek a LED vezérlők működtetéséhez szükségesek.
+A LED vezérlő egységeknek bájtok formájában küldhetünk adatokat.
+Egy bájt elküldése a következőképpen tehető meg:
+\begin{lstlisting}[style=CStyle]
+void write_byte (uint8_t byte){
+	for (int i = 0; i<8; i++){
+		HAL_GPIO_WritePin (MAXPORT, CLOCK_PIN, 0);
+		HAL_GPIO_WritePin (MAXPORT, DATA_PIN, byte&0x80);
+		byte = byte<<1;
+		HAL_GPIO_WritePin (MAXPORT, CLOCK_PIN, 1);
+	}
+}
+\end{lstlisting}
+Mint látható, a bájtot bitenként küldhetjük el. Minden bit elküldésénél a kijelző óra pinjét le kell húznunk, az adat pinjén beállítjuk a megfelelő bit értékét, majd az óra pinjét felhúzzuk. Ezt addig ismételjük, amíg a teljes bájtot át nem küldtük.
+
+A vezérlő értékeit a megfelelő regiszterek címzésével állíthatjuk be.
+
+Első lépésként a kijelző CS pinjét le kell húznunk, majd a kiválasztott regiszter számát kell elküldenünk a már ismert módon. Ezután a regiszterbe küldendő bájtot kell továbbítanunk. Végül a CS pint előbb 0-ra, majd 1-re húzzuk fel.
+
+A vezérlő konfigurálásához dedikált vezérlők állnak rendelkezésre. A kijelző inicializálása ezen regiszterek beállításával történik a \texttt{void max\_init(uint8\_t intensity)} függvénnyel.
+
+A $8\times 8$-as mátrix értékeit soronként adhatjuk meg a megfelelő bájtok beállításával. A sorok regisztercímei 1-8 ig terjednek.
+
+Mivel a kijelző LED vezérlők és mátrixok kaszkádolásából áll, így a soroknak elküldött értékek minden cellábban ugyan azok a LED-ek villannak fel. A megfelelő cella kiválasztásához meg kell adnunk a cella indexét. Az indexelés 0-tól kezdődik. Amíg el nem érjük a kívánt cellát, addig az előtte lévő cellákat a 0 című regiszter 0 értékének beállításával léphetjük át. Majd ha elértük a cellát, a megfelelő sorát elláthatjuk a bájt értékével. A maradék cellákat is a 0,0 értékkel kell ellátnunk. Ezt a műveletet a \texttt{void set\_byte\_on\_matrix(uint8\_t byte, uint8\_t row, uint8\_t column)} függvénnyel tehetjük meg.
+
+\bigskip
+
+A \texttt{max\_display.c}-ben található meg a kijelző reprezentálására szolgáló \texttt{screen\_buffer}, amely egy kétdimenziós mátrix. 8 sorral rendelkezik és annyi oszlopa van, ahány cella van a kijelzőben.
+A forrásállomány ezen mátrix manipulálására szolgáló metódusokat tartalmaz, illetve itt kap helyet a már említett karakterkészlet is.
+
+\bigskip
+
+A \texttt{scrolling\_text.c} állományban találhatóak meg a csúszó szöveg megjelenítésért felelős eljárások.
+
+\noindent Mindkét függvény ugyan azt az eredményt szolgáltatja, viszont a \texttt{void scroll\_text\_left\_IT (Scrolling\_text* st)} megszakítás alapú, míg a másik belső késleltetéseket használ. Az utóbbi az eszköz inicializálásánál van szerepe, hiszen ilyenkor még nem léptünk be a főciklusba, így elengedhetetlen a soros működés.
+
+A megszakítás alapú kiíratás csúszó szövegét az alábbi struktúrával adhatjuk meg:
+\begin{lstlisting}[style=CStyle]
+typedef struct Scrolling_texts {
+   char text[600];
+   int times;
+   int char_index;
+   int char_column;
+} Scrolling_text;
+\end{lstlisting}
+A \texttt{text} adattagban helyezkedik el a kiírandó szöveg. A \texttt{times} az ismétlés számát adja meg. A \texttt{char\_index} és \texttt{char\_column} pedig a \ref{csuszo} fejezetben már ismertetett csúszó szöveg kiíratásában szereplő $i$ és $j$ értékek. 
+
+\bigskip
+
+A \texttt{clock\_face.c} forrásállomány az óra számlapjának megjelenítésére szolgáló két metódust tartalmazza.
+
+\subsubsection{Wifi kommunikáció}
+
+Az \texttt{uart\_handler.c} csupán azokat az UART kezelő függvényeket tartalmazza, amelyek a soros működésű UART kommunikációban használatosak. Ilyen soros működésre van szükség például az ESP-01 inicializálása során is, illetve az UART-on való küldés minden esetben soros működésű.
+
+\bigskip
+
+Az \texttt{esp01.c} két metódust tartalmaz: az inicializáló metódusát, amely az eszköz beállítására szolgál és a szerverkezelő metódust.
+Az ESP-01 modul működtetéséhez ún. AT parancsokat kell küldenünk. Ezeket a parancsokat a kártya értelmezi és a bennük található utasításokat végrehajtja.
+
+Az eszköz inicializálásához elegendő megadnunk a Wifi hálózatunk SSID-jét és jelszavát. Az eszköz ezután megpróbál csatlakozni rá. Ezt a következőképpen tehetjük meg:
+\begin{lstlisting}[style=CStyle]
+char* device_ip = esp_init("ssid", "pswd");
+\end{lstlisting}
+Az inicializáló függvény visszatérési értéke a routertől kapott lokálishálózatos IP címe. Ezen cím 80-as portján az eszköz egy HTTP szervert szolgáltat.
+
+\subsubsection{Megszakítások}
+
+A megszakítások jelzésére a már ismertetett változók szolgálnak.
+
+A programban a főciklusba lépés előtt az UART kommunikáció átvált asszinkron módra. Bejövő adat esetén karakterenként újjabb megszakítás generálódik. A megszakítás lekezelése után a kapott karaktert egy bufferben helyezem el, növelem a karakterszámláló értékét, majd újra elindítom az asszinkron UART figyelőt.
+Az \texttt{stm32f1xx\_it.c} UART megszakításkezelőjét a következőkkel egészítetem ki: 
+\begin{lstlisting}[style=CStyle]
+void USART1_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART1_IRQn 0 */
+	uart_interrupt = 1;
+
+  /* USER CODE END USART1_IRQn 0 */
+  HAL_UART_IRQHandler(&huart1);
+  /* USER CODE BEGIN USART1_IRQn 1 */
+	receive_buffer[uart_interrupt_counter] = receive_it;
+
+	uart_interrupt_counter++;
+
+  HAL_UART_Receive_IT(&huart1, &receive_it, 1);
+
+  /* USER CODE END USART1_IRQn 1 */
+}
+\end{lstlisting}
+
+\subsubsection{A főciklus}
+
+A \texttt{main.c}-ben található meg a program végtelen ciklusa. Itt kap helyet a már ismertetett Round-robin ütemező is.
+
+\begin{lstlisting}[style=CStyle]
+while (1)
+{
+	if(uart_interrupt && uart_interrupt_counter > 1){
+		/* Server */
+	}
+	if(update_screen == 1 && strlen(scrolling_text.text) != 0){
+		/* Updating the scrolling text */
+	}
+	if(update_clock == 1 && strlen(scrolling_text.text) == 0){
+		/* Updating the clockface */
+	}
+}
+\end{lstlisting}
 
 \section{Az eszköz működésének folyamata}
 Felsorolás számozással
