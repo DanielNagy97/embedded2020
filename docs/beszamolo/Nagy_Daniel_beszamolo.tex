@@ -27,32 +27,35 @@
 \usepackage{xcolor}
 \usepackage{listings}
 
+% Hyperref
+\usepackage{hyperref}
+
 \definecolor{mGreen}{rgb}{0,0.6,0}
 \definecolor{mGray}{rgb}{0.5,0.5,0.5}
 \definecolor{mPurple}{rgb}{0.58,0,0.82}
 \definecolor{backgroundColour}{rgb}{0.95,0.95,0.92}
 
 \lstdefinestyle{CStyle}{
-    backgroundcolor=\color{backgroundColour},   
+    backgroundcolor=\color{backgroundColour},
     commentstyle=\color{mGreen},
     keywordstyle=\color{magenta},
     numberstyle=\tiny\color{mGray},
     stringstyle=\color{mPurple},
     basicstyle=\footnotesize,
-    breakatwhitespace=false,         
-    breaklines=true,                 
-    captionpos=b,                    
-    keepspaces=true,                 
-    numbers=left,                    
-    numbersep=5pt,                  
-    showspaces=false,                
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
     showstringspaces=false,
-    showtabs=false,                  
+    showtabs=false,
     tabsize=2,
     language=C
 }
 
-\title{Architektúrák, beágyazott rendszerek (GEVAU218M)\\\LARGE{\textbf{Beszámoló}}\\ \bigskip \Large{\textit{LED mátrix kijelzős óra és szöveg scroller}}}
+\title{Architektúrák, beágyazott rendszerek (GEVAU218M)\\\LARGE{\textbf{Beszámoló}}\\ \medskip \large{\textbf{ARM-SW} Szoftver fejlesztés ARM mikrovezérlőre} \\ \bigskip \LARGE{\textit{LED mátrix kijelzős óra és szöveg scroller}}}
 \date{2020. november 21.}
 \author{Nagy Dániel Zoltán JJ181J}
 
@@ -60,7 +63,7 @@
 
 \maketitle
 
-\section{Leírás}
+\section{A feladat}
 A féléves beadandó feladatomnak egy óra elkészítését választottam.
 Az eszköz egy LED mátrix kijelzőn a pontos időt mutatja. A kijelzőn minden harmincadik másodpercben csúszó szövegkként megjelenik a napi dátum és az aktuális napnak a neve. A felhasználónak lehetősége van szöveget küldeni az eszköznek. Ezt az eszköz által szolgáltatott weboldalon teheti meg. A szöveg a kijelzőn annyiszor csúszik végig amennyiszer azt a felhasználó beállította. A weboldalon lehetőségünk van a kijelző fényerejét is konfigurálni.
 
@@ -105,6 +108,7 @@ Ha a soron következő karakter ASCII kódja 32 és 90 közé esik, akkor 32-t k
 Az ékezetes karakterek már nem alkotnak egybefüggő területet az ASCII kódtáblában, így hivatkozásuk egyedi értékek szerint történik.
 
 A képernyőn megjelenő tartalom szintén egy kétdimenziós bináris mátrixalakban írható le. Méretei az egymás után összefűzött cellák által adott felületéből adódnak. Egy 4 cellából álló kijelző esetében a kijelző mérete: $32\times 8$.
+A megvalósításról szóló fejezetben később kitérek erre, hogy az egyes cellák sorait egy-egy bájttal adhatjuk meg. Így a képernyőt reprezentáló mátrix oszlopainak szélessége 8 egység lesz. Vagyis az oszlopok indexe az egyes cellákat jelölik. 
 A megjelenítéshez ezt a nagy mátrixot kell manipulálnunk.
 
 \subsubsection{Csúszó szöveg} \label{csuszo}
@@ -122,6 +126,28 @@ A szöveget a képernyő jobboldaláról csúsztatjuk balra.
 \end{enumerate}
 
 A fenti eljárásban a $t$ értéke tetszőleges lehet. Minél kisebb a várakozási idő, annál gyorsabban fog a kiírandó szöveg csúszni a képernyőn.
+
+A fenti eljárásban a harmadik lépésben megemlítem, hogy a mátrixot egy egységgel balra tolom. Az eltoláshoz figyelembe kell vennünk a szomszédos cellák értékeit.
+
+\begin{lstlisting}[style=CStyle]
+void shift_screen_buffer_left(){
+	for(int i = 0; i<NUMBER_OF_CELLS; i++){
+		for(int j = 0; j<8; j++){
+			switch (i) {
+				case NUMBER_OF_CELLS-1:
+					screen_buffer[i][j] =
+						screen_buffer[i][j] << 1;
+					break;
+				default:
+					screen_buffer[i][j] =
+						screen_buffer[i][j] << 1
+							| ((screen_buffer[i+1][j] & 0x80) >> 7);
+					break;
+			}
+		}
+	}
+}
+\end{lstlisting}
 
 \subsubsection{Az óra számlapja}
 
@@ -214,16 +240,79 @@ Az ütemezés utolsó résztvevője az óra számlap frissítő kódja. Ha az ó
 \subsection{Felhasznált hardverek}
 \subsubsection{STM32F103C8T6 fejlesztői kártya}
 Stm32 pinout kép
-Az általam elkészített eszköz alapja az STM32F103C8T6 fejlesztői kártya, amely a Cortex-M3-as processzorral rendelkezik...
+Az általam elkészített eszköz alapja az \texttt{STM32F103C8T6} fejlesztői kártya, amely az ARM 32-bit-es Cortex-M3-as processzorral rendelkezik. 72 MHz maximum frekvenciával képes működni. 64 Kbyte Flash memóriával és 20 Kbyte SRAM-al (\textit{Static RAM}) rendelkezik. A programom a CUBE IDE szerint 24.73 KB Flash memóriát és 4.88 KB RAM-ot foglal le.
+A fejlesztői kártya rendelkezik egy beépített RTC (\textit{Real Time Clock}) egységgel is, amely az idő számolását végzi a háttérben.
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width = 9cm]{images/stm32.jpg}
+	\caption{A fejlesztői kártya}
+	\label{fig:mcu}
+\end{figure}
+
+\begin{center}
+\begin{tabular}{ | l | l | }
+\hline
+\multicolumn{2}{|c|}{\textit{\Large{A használt pinek}}} \\
+\hline
+\textbf{PIN} & \textbf{Funkció}\\
+\hline
+5V & Bemeneti feszültség\\
+G & A tápegységtől kapott Ground\\
+\hline
+A5 & Csatlakozás a LED driver CLOCK pinjére\\
+A6 & Csatlakozás a LED driver CS pinjére\\
+A7 & Csatlakozás a LED driver Data pinjére\\
+\hline
+A10 & USART RX, amely az ESP-01 TX pinjére csatlakozik\\
+A9 & USART TX, amely az ESP-01 RX pinjére csatlakozik\\
+G & Csatlakozás az ESP-01 Ground pinjéhez\\
+3.3V & Az ESP-01 áramellátása, csatlakozás a VCC pinjéhez\\
+3.3V & Csatlakozás az ESP-01 CH\_EN pinjéhez\\
+\hline
+\end{tabular}
+\end{center}
+
+A kártya programozásához szükségünk van egy külső eszközre, egy programozóra, mivel a kártyán nem található ilyen. Az általam használt programozó az \texttt{ST-Link V2}, amelyet USB porton csatlakoztathatunk a számítógéphez. A fejlesztői kártyához az SWDIO, GND, SWCLK és a 3.3V-os pinekkel csatlakozhatunk.
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width = 8cm]{images/stlink.jpg}
+	\caption{A programozó}
+	\label{fig:stlink}
+\end{figure}	
+
+A fejlesztői kártyán egy \textit{jumper} segítségével választhatjuk ki a futási és programozási módot. A CUBE IDE-ben a megfelelő beállítások alkalmazásával nem szükséges a jumpert átrakosgatni a programozáskor, maradhat futási módban, ezzel is meggyorsítva a fejlesztést.
 
 \subsubsection{ESP8266 ESP-01}
-Az ESP-01 (8866) valójában szintén egy mikrovezérlő. A projektemben WIFI modulként használtam fel, vagyis ez felel a vezetéknélküli kommunikációért. A fejlesztői kártyávan USART kommunikációs protokollonk keresztük kommunikál. Áramellátását is az STM32 kártyától kapja. 
+Az ESP-01 valójában szintén egy mikrovezérlő. A projektemben WIFI modulként használtam fel, vagyis ez felel a vezetéknélküli kommunikációért. A fejlesztői kártyávan USART kommunikációs protokollon keresztük kommunikál. Áramellátását is az STM32 kártyától kapja.
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width = 6cm]{images/esp01.jpg}
+	\caption{A Wifi modul}
+	\label{fig:esp01}
+\end{figure}	
 
 \subsubsection{MAX7219-4DM}
 A kijelző 4 db 8x8-as LED mátrixból áll, amely mögött 4 db MAX7219 LED meghajtó üzemel. Ezt az össze kaszkádolt kijelzőt készen rendeltem az internetről, mivel a tulajdonságai alapján teljesen megfelelt az elképzeléseimnek. A 4 db mátrix tökéletesen alkalmas egy digitális óra 4 számjegyének megjelenítésére, és a csúsztatott szöveg kijelzése is megoldható vele, hiszen a 4 mátrix megfelelő szélességű felületet biztosít a szavak kirajzolásához.
 
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width = 6cm]{images/matrix.jpg}
+	\caption{A kijelző és a LED meghajtó}
+	\label{fig:matrix}
+\end{figure}	
+
 \subsubsection{Mikro USB aljzat + Tápegység}
 A tápegység tulajdonságainak leírása
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width = 5cm]{images/dip5.jpg}
+	\caption{Micro USB aljzat}
+	\label{fig:dip5}
+\end{figure}	
 
 \subsection{A program}
 
@@ -350,17 +439,8 @@ while (1)
 }
 \end{lstlisting}
 
-\section{Az eszköz működésének folyamata}
-Felsorolás számozással
-Bekapcsoláskor (hálózatra csatlakozáskor) megjelenik a képernyőn a "Boot..." felirat. Ezzel egyidőben megkezdődik az ESP-01 modul inicializálása és konfigurálása.
-A folyamat kb 10 másodpercet vesz igénybe...
-
-Itt részletezni, hogy mit csinál, stb...
-Felsorolás
-
-A Wifi kártya konfigurálása után a képernyőn háromszor végigcsúszik a kártya IP címe.
-A kártya a 80-as ponton egy http szervert biztosít, így egy böngészőablak segítségével bármilyen eszközről elérhetjük az általa szolgáltatott weboldalt.
-
-stb...
+\section{A kódbázis elérhetősége}
+Az eszköz programjának a kódja az alábbi repositoryban érhető el:\\
+\url{https://github.com/DanielNagy97/embedded2020}
 
 \end{document}
