@@ -56,7 +56,7 @@
 }
 
 \title{Architektúrák, beágyazott rendszerek (GEVAU218M)\\\LARGE{\textbf{Beszámoló}}\\ \medskip \large{\textbf{ARM-SW} Szoftver fejlesztés ARM mikrovezérlőre} \\ \bigskip \LARGE{\textit{LED mátrix kijelzős óra és szöveg scroller}}}
-\date{2020. november 21.}
+\date{2020. december 3.}
 \author{Nagy Dániel Zoltán JJ181J}
 
 \begin{document}
@@ -79,8 +79,8 @@ Az eszköz egy LED mátrix kijelzőn a pontos időt mutatja. A kijelzőn minden 
 \subsection{Megjelenítés}
 Az eszköz egy mátrix kijelzőn jeleníti meg a kiírandó tartalmakat. A kijelző cellái különálló $8\times 8$-as LED mátrixok. Az egymás után fűzött cellák alkotják a kijelző felületét. A feladatomhoz 4 db cella elegendő, hiszen akkora felület tökéletesen alkalmas egy digitális óra 4 számjegyének megjelenítésére, és a csúsztatott szöveg kijelzése is megoldható vele, hiszen a 4 mátrix megfelelő szélességű felületet biztosít a szavak olasható kirajzolásához.
 
-A szövegek megjelenítése érdekében szükséges a mátrixon megjeleníthető karakterek definiálása. Az egyes karakterek képe leírható egy bináris kétdimenziós mátrix formájában, ahol az 1 érték világító, a 0 pedig kikapcsolt LED-et jelöl.
-A karakterek dimenzióját a mátrix méretei határozzák meg. Vagyis a karaterek maximum mátrix mérete is $8\times 8$-as lehet. A magasság minden esetben 8 egy, a szélesség viszont változó lehet. A változó karakterszélesség használatával a szavak egybefüggőbbnek látszanak.
+A szövegek megjelenítéséhez elsőként a mátrixon megjeleníthető karaktereket definiáltam. Az egyes karakterek képe leírható egy bináris kétdimenziós mátrix formájában, ahol az 1 érték világító, a 0 pedig kikapcsolt LED-et jelöl.
+A karakterek dimenzióját a mátrix méretei határozzák meg. A magasság minden esetben 8 egység, a szélesség viszont változó lehet. A változó karakterszélesség használatával a szavak egybefüggőbbnek látszanak.
 
 Példa egy G betű képére:
 \begin{center}
@@ -93,7 +93,7 @@ Példa egy G betű képére:
 0 1 1 1 0\\
 0 0 0 0 0}
 \end{center}
-A fenti példából látható, hogy a betű képét egy $5\times 8$-as bináris mátrixxal írhatjuk le. A karaktereket állítva rajzoltam meg. A legalsó sor a legtöbb esetben üres, így a betűk maximum 7 egység magasak.
+A fenti példából látható, hogy a betű képét egy $5\times 8$-as bináris mátrixxal írhatjuk le. A karaktereket állítva rajzoltam meg. A legalsó sor a legtöbb esetben üres, viszont pl. a j-g-y, stb betűknél a legalsó sorban kap helyet a betű "farka".
 
 \begin{figure}[ht]
 	\centering
@@ -102,23 +102,22 @@ A fenti példából látható, hogy a betű képét egy $5\times 8$-as bináris 
 	\label{fig:hetfo}
 \end{figure}	
 
-
 A karakterek azonosítása az ASCII karakterkódjaik alapján történik. Mivel nem definiáltam a teljes ASCII karakterkészletet, így bizonyos esetekben az üres helyek miatt ki kell vonni a karakterkódból a kihagyott karakterszám értékét, hogy megkapjuk a keresett karakter képének az indexét.
 Ha a soron következő karakter ASCII kódja 32 és 90 közé esik, akkor 32-t kell levonni. Ha pedig 97 és 122 közé esik, akkor 38-at. A nem definiált karakterek helyett egy * képét illeszti.
 Az ékezetes karakterek már nem alkotnak egybefüggő területet az ASCII kódtáblában, így hivatkozásuk egyedi értékek szerint történik.
 
 A képernyőn megjelenő tartalom szintén egy kétdimenziós bináris mátrixalakban írható le. Méretei az egymás után összefűzött cellák által adott felületéből adódnak. Egy 4 cellából álló kijelző esetében a kijelző mérete: $32\times 8$.
-A megvalósításról szóló fejezetben később kitérek erre, hogy az egyes cellák sorait egy-egy bájttal adhatjuk meg. Így a képernyőt reprezentáló mátrix oszlopainak szélessége 8 egység lesz. Vagyis az oszlopok indexe az egyes cellákat jelölik. 
+A megvalósításról szóló fejezetben később kitérek arra, hogy az egyes cellák sorait egy-egy bájttal adhatjuk meg. Így a képernyőt reprezentáló mátrix oszlopainak szélessége 8 egység lesz. Vagyis egy olyan mátrixban adhatjuk meg a megjelenítendő tartalmat, amelynek 8 sora van és az oszlopok indexe az egyes cellákat jelölik, a mátrix elemei pedig 1 bájt hosszúságúak.
 A megjelenítéshez ezt a nagy mátrixot kell manipulálnunk.
 
 \subsubsection{Csúszó szöveg} \label{csuszo}
-A csúszó szöveg megjelenítése a következő képpen tehető meg:
+A csúszó szöveg megjelenítését a következőképpen oldottam meg:\\
 Vegyünk egy $n$ karakterből álló szöveget és legyen két mutatónk: $i$, ami a soron következő karakterre mutat és $j$, amely az aktuális karakter mátrix alakjának az oszlopaira mutat. $i = 0$, $j = 0$.
 A szöveget a képernyő jobboldaláról csúsztatjuk balra.
 \begin{enumerate}
 	\item Vegyük az szöveg $i$-edik karakterét.
 	\item Az $i$-edik karakter $j$-edik oszlopát helyezzük a mátrix utolsó oszlopába.
-	\item A mátrixot egy egységgel toljuk el balra. Az első oszlopa így törlődik, a jobb szélére helyezzünk egy üres oszlopot.
+	\item A mátrixot egy egységgel toljuk el balra. Az első egy bit szélességű oszlopa így törlődik, a jobb szélére helyezzünk egy üres, egy bit szélességű oszlopot.
 	\item A mátrix képét jelenítsük meg a kijelzőn, majd várjunk $t$ időegységnyit.
 	\item Növeljük a $j$ értékét eggyel, majd térjünk vissza a 2. lépésre. Egészen addig ismételjük, amíg a $j \leq$ az $i$-edik karakter képének szélességével.
 	\item A mátrixot egy egységgel toljuk el balra a már ismert módon, hogy a karakterek között egy üres oszlopot hagyjunk.
@@ -129,25 +128,23 @@ A fenti eljárásban a $t$ értéke tetszőleges lehet. Minél kisebb a várakoz
 
 A fenti eljárásban a harmadik lépésben megemlítem, hogy a mátrixot egy egységgel balra tolom. Az eltoláshoz figyelembe kell vennünk a szomszédos cellák értékeit.
 
-\begin{lstlisting}[style=CStyle]
-void shift_screen_buffer_left(){
-	for(int i = 0; i<NUMBER_OF_CELLS; i++){
-		for(int j = 0; j<8; j++){
-			switch (i) {
-				case NUMBER_OF_CELLS-1:
-					screen_buffer[i][j] =
-						screen_buffer[i][j] << 1;
-					break;
-				default:
-					screen_buffer[i][j] =
-						screen_buffer[i][j] << 1
-							| ((screen_buffer[i+1][j] & 0x80) >> 7);
-					break;
-			}
-		}
-	}
-}
-\end{lstlisting}
+\bigskip
+
+\bigskip
+
+\noindent\textbf{FOR} $k$ $\leftarrow$ 0 \textbf{TO} Hossz[képernyő] \textbf{DO}\\
+\indent \textbf{FOR} $l$ $\leftarrow$ 0 \textbf{TO} 8 \textbf{DO}\\
+\indent \indent \textbf{IF} $k$ = Hossz[képernyő$_l$]-1\\
+\indent \indent \indent \textbf{THEN} képernyő$_{kl}$ $\leftarrow$ képernyő$_{kl}$ << 1\\
+\indent \indent \textbf{ELSE}\\
+\indent \indent \indent \textbf{THEN} képernyő$_{kl}$ $\leftarrow$ képernyő$_{kl}$ << 1 $\lor$ ((képernyő$_{k+1l}$ $\land$ 0x80) >> 7)
+
+\bigskip
+
+\bigskip
+A << és >> a bitenkénti eltolás műveleteket, a $\lor$ a \textit{vagy} logikai művelet, a $\land$ pedig az \textit{és} logikai műveletet jelzi.
+
+\newpage
 
 \subsubsection{Az óra számlapja}
 
@@ -160,14 +157,14 @@ void shift_screen_buffer_left(){
 
 Az óra számlapjának megjelenítéséhez szintén a kijelzőt reprezentáló mátrixot manipuláljuk.
 Ebben az esetben fix pozíciókat használunk és a megjelenítendő számjegyek mátrixképei azonos szélességűek.
-Az óra számjegyeihez egy külön karakterkészletet definiáltam, amelyek 0-9 reprezentálják a számokat. Ennek csupán esztétikai jelentősége van, a számjegyek a már meglévő karakterektől vastagabbak.
+Az óra számjegyeihez egy külön karakterkészletet definiáltam, amelyek 0-9-ig reprezentálják a számokat. Ennek csupán esztétikai jelentősége van, a számjegyek a már meglévő karakterektől vastagabbak.
 Az óra számlapja 4 számjegyből áll és a középen elhelyezkedő kettőspontból.
-A 10-nél kissebb számjegyek elég egy nullást illesztünk, hogy a megjelenített kép szimmetrikus legyen.
+A 10-nél kissebb számjegyek elé egy nullást illesztünk, hogy a megjelenített kép szimmetrikus legyen.
 
 \subsection{Vezetéknélküli kommunikáció}
-Az eszközön megjelenő szöveget saját hálózaton keresztül van lehetőségünk küldeni. Az eszköznek csatlakoznia kell a felhasználó hálózatára. Ezt WIFI kommunikációs protokollon valósul meg. A csatlakozást követően az eszköz a routertől kap egy saját IP címet és a 80-as portján egy HTTP szervert szolgáltat.
+Az eszközön megjelenő szöveget saját hálózaton keresztül van lehetőségünk küldeni. Az eszköznek csatlakoznia kell a felhasználó hálózatára. Ez WIFI kommunikációs protokollon valósul meg. A csatlakozást követően az eszköz a routertől kap egy saját IP címet és a 80-as portján egy HTTP szervert szolgáltat.
 A szerveralkalmazás rendkívül egyszerű. Két kérést vesz vigyelembe: a GET, illetve a POST kéréseket.
-Ezen kérések aszinkron léphetnek fel. Így a kérések beérkezésekor az üzenetet el kell tárolnunk egy \textit{bufferben}. Ha az ütemező a szervernek adja a futási jogot, az a már a buffer tartalmát dolgozza fel.
+Ezen kérések aszinkron léphetnek fel. Így a kérések beérkezésekor az üzenetet el kell tárolnunk egy \textit{bufferben}. Ha az ütemező a szervernek adja a futási jogot, az már a buffer tartalmát dolgozza fel.
 A programomban egyetlen buffert használok. Ez problémát jelentene akkor, ha egyszerre több kérés érkezne be. Ilyenkor szerencsésebb lenne egy ún. körkörös buffer használata. De mivel az eszköz otthoni használatra lett tervezve, amelynek hálózatán kevés kliens van jelen, így egy buffer is elegendő a feladathoz.
 
 \begin{figure}[ht]
@@ -179,12 +176,12 @@ A programomban egyetlen buffert használok. Ez problémát jelentene akkor, ha e
 
 \subsubsection{GET}
 
-GET kérés esetén feltételezhetjük, hogy a kérés a weboldal betöltésére irányul, egy böngészőablakból. A kéréshez minden esetben tartozik egy \textit{link ID} is, vagyis egy azonosító, amely a kiszolgálásra váró klienseket jelöli. A kérés beérkezésekor az eszköz kiküldi a weboldalt a kliensnek. A weboldal tartalma egy inputmező, amleyben a kliensek szöveget írhatnak. Az inputmező alatt a kliens megadhatja, hogy a szövege hányszor csússzon végig a kijelzőn (\textit{Scroll times}), illetve a kijelző fényerejét is beállíthatja (\textit{Intensity}) a szövegküldéssel egyidejűleg.
+GET kérés esetén feltételezhetjük, hogy a kérés a weboldal betöltésére irányul, egy böngészőablakból. A kéréshez minden esetben tartozik egy \textit{link ID} is, vagyis egy azonosító, amely a kiszolgálásra váró klienst jelöli. A kérés feldolgozásakor az eszköz kiküldi a weboldalt a kliensnek. A weboldal tartalma egy inputmező, amelyben a kliensek szöveget írhatnak. Az inputmező alatt a kliens megadhatja, hogy a szövege hányszor csússzon végig a kijelzőn (\textit{Scroll times}), illetve a kijelző fényerejét is beállíthatja (\textit{Intensity}) a szövegküldéssel egyidejűleg.
 
 \subsubsection{POST}
 
 POST kérés esetén feltételezhetjük, hogy a kérés törzse a kliens által küldött szöveget tartalmazza.
-A kliens által elküldött üzenet nem csupán az általa megadott szöveget tartalmazza. A frontenden megjelenített beállítások (\textit{Scroll times, Intensity}) mellett a kliens eszközének ideje is küldésre kerül.
+A kérésben elküldött üzenet nem csupán az általa megadott szöveget tartalmazza. A frontenden megjelenített beállítások (\textit{Scroll times, Intensity}) mellett a kliens eszközének ideje is küldésre kerül.
 Az üzenet kezdetét egy \texttt{+MSG\~} előtag jelöli. Az üzenet tagjait egy-egy \texttt{\~} (tilde) választja el egymástól.
 
 Az üzenet tartalma:
@@ -218,11 +215,11 @@ Ha a frissítés pillanatában a másodperc 00 vagy 30 értékkel rendelkezik, a
 Az pontos idő nyilvántartását egy RTC modul végzi. Az általam választott fejlesztői kártyán alapból megtalálható.
 Az idő frissítése a kliensek által küldött szövegekkel együtt történik.
 
-Az idő szinkronizációjára egy másik módszer lehet az NTP (\textit{Network Time Protocol}) szerverek használata. Viszont ez a lehetőség abban az esetben működne, ha az eszköznek minden szinkronizációs időben van internetelérése és a megadott NTP szerverek egyike működik.
+Az idő szinkronizációjára egy másik módszer lehet az NTP (\textit{Network Time Protocol}) szerverek használata. Viszont ez a lehetőség abban az esetben működne, ha az eszköznek minden szinkronizációs időben lenne internetelérése és a megadott NTP szerverek valamelyike működne.
 Mivel a kliens által küldött időinformáció egyszerűbb és biztosabb, ezért az NPT szerveres szinkronizációt elvetettem.
 
 \subsection{Ütemezés}
-Az ütemezés Round-robin(kerge rigó) alapú. Egy előre meghatározott sorrend alapján működik a rendszer. A prioritási sorrend a következő:
+Az ütemezés Round-robin(kerge rigó) alapú. Egy előre meghatározott sorrend alapján működik a rendszer. A sorrend a következő:
 \begin{enumerate}
 	\item Szerver
 	\item Csúszó szöveg frissítés
@@ -230,18 +227,27 @@ Az ütemezés Round-robin(kerge rigó) alapú. Egy előre meghatározott sorrend
 \end{enumerate}
 Az ütemezésben a különféle megszakításoknak is kulcsszerepük van.
 
-A szerver alkalmazás csak akkor kezdi el feldolgozni a kéréseket tartalmazó buffer tartalmát, ha annak hossza legalább 1. Ha az ütemező neki osztja ki a futási jogot és ez a feltétel teljesül, akkor először is egy kis ideig várakozik, hogy a kérés egésze beérjen a bufferbe. Ehhez egy előre meghatározott késleltetést adtam meg, ami alatt nagy valószínűséggel beérkezik a teljes üzenet. Ezután a buffer tartalmát feldolgozza a program és a tartalma alapján vagy kiszolgálja a klienst vagy lekezeli a POST kérést. Az üzenet feldolgozása után a buffer tartalma törlésre kerül, hossza így 0 lesz, és a következő üzenet beérkezéséig a futási jogot egyből átadja a soron következő kódrészletnek.
+A szerveralkalmazás csak akkor kezdi el feldolgozni a kéréseket tartalmazó buffer tartalmát, ha annak hossza legalább 1. Ha az ütemező neki osztja ki a futási jogot és ez a feltétel teljesül, akkor először is egy kis ideig várakozik, hogy a kérés egésze beérjen a bufferbe. Ehhez egy előre meghatározott késleltetést adtam meg, ami alatt nagy valószínűséggel beérkezik a teljes üzenet. Ezután a buffer tartalmát feldolgozza a program és a tartalma alapján vagy kiszolgálja a klienst vagy lekezeli a POST kérést. Az üzenet feldolgozása után a buffer tartalma törlésre kerül, hossza így 0 lesz, és a következő üzenet beérkezéséig a futási jogot egyből átadja a soron következő kódrészletnek.
 
-Ha az ütemezés a csúszó szöveg frissítésére esik, akkor elsősorban le kell ellenőrizni, hogy van-e kiírandó szöveg. A másik feltétel pedig a szövegfrissítő időzítő megszakításának jelzésének igaz értéke. Ha teljesülnek a feltételek, akkor a már ismertetett módon egy lépéssel frissíti a kijelző mátrixát, hamis értékre állítja a megszakítás jelzésére szolgáló változt és a futási jogot a soron következőnek adja.
+Ha az ütemezés a csúszó szöveg frissítésére esik, akkor elsősorban le kell ellenőrizni, hogy van-e kiírandó szöveg. A másik feltétel pedig a szövegfrissítő időzítő megszakításának jelzésének \textit{igaz} értéke. Ha teljesülnek a feltételek, akkor a már ismertetett módon egy lépéssel frissíti a kijelző mátrixát, \textit{hamis} értékre állítja a megszakítás jelzésére szolgáló változót és a futási jogot a soron következőnek adja.
 
-Az ütemezés utolsó résztvevője az óra számlap frissítő kódja. Ha az óra számlapjának időzítője megszakítást generált, vagyis a megszakítás figyelő változó igaz értékkel rendelkezik és nincsen kiírandó szöveg, akkor kirajzolódik az óra számlapja. Félpercenként csúsztatni való szöveg is generálódik, amely az aktuális dátumot és a nap nevét tartalmazza. A műveletek végén a megszakítás jelzéséért felelős változót hamisra állítja.
+Az ütemezés utolsó résztvevője az óra számlap frissítő kódja. Ha az óra számlapjának időzítője megszakítást generált, vagyis a megszakítás figyelő változó \textit{igaz} értékkel rendelkezik és nincsen kiírandó szöveg, akkor kirajzolódik az óra számlapja. Félpercenként csúsztatni való szöveg is generálódik, amely az aktuális dátumot és a nap nevét tartalmazza. A műveletek végén a megszakítás jelzéséért felelős változót \textit{hamisra} állítja.
 
 \section{Megvalósítás}
 \subsection{Felhasznált hardverek}
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width = 12cm]{images/back.jpg}
+	\caption{Az elkészült feladat hátoldala}
+	\label{fig:back}
+\end{figure}
+
+Az elkészült feladat vázát egy bakelit lemez adja (Manuela: Die großen Erfolge). A lemez címkéjénél a kijelző méretével megegyező lyukat vágtam ki. Így előlről nézve csak a kijelző felülete látszódik, a többi alkatrész takarásban van. A hardverek a lemez hátoldalán vannak elhelyezve. A fejlesztői kártya és a Wifi modul kétoldalú ragasztóval van rögzítve, a kijelző és a micro USB aljzat pedig hőre lágyuló ragasztóval. 
+
 \subsubsection{STM32F103C8T6 fejlesztői kártya}
-Stm32 pinout kép
-Az általam elkészített eszköz alapja az \texttt{STM32F103C8T6} fejlesztői kártya, amely az ARM 32-bit-es Cortex-M3-as processzorral rendelkezik. 72 MHz maximum frekvenciával képes működni. 64 Kbyte Flash memóriával és 20 Kbyte SRAM-al (\textit{Static RAM}) rendelkezik. A programom a CUBE IDE szerint 24.73 KB Flash memóriát és 4.88 KB RAM-ot foglal le.
-A fejlesztői kártya rendelkezik egy beépített RTC (\textit{Real Time Clock}) egységgel is, amely az idő számolását végzi a háttérben.
+Az általam elkészített feladat alapja az \texttt{STM32F103C8T6} fejlesztői kártya, amelyen egy ARM 32-bit-es mikrovezérlő helyezkedik el. Cortex-M3-as processzorral rendelkezik és 72 MHz maximum frekvenciával képes működni. 64 Kbyte Flash memóriával és 20 Kbyte SRAM-al (\textit{Static RAM}) rendelkezik. A programom a CUBE IDE szerint 24.73 KB Flash memóriát és 4.88 KB RAM-ot foglal le ebből.
+A fejlesztői kártyán megtalálható egy beépített RTC (\textit{Real Time Clock}) egység is, amely az idő számolását végzi a háttérben.
 
 \begin{figure}[ht]
 	\centering
@@ -284,8 +290,10 @@ A kártya programozásához szükségünk van egy külső eszközre, egy program
 
 A fejlesztői kártyán egy \textit{jumper} segítségével választhatjuk ki a futási és programozási módot. A CUBE IDE-ben a megfelelő beállítások alkalmazásával nem szükséges a jumpert átrakosgatni a programozáskor, maradhat futási módban, ezzel is meggyorsítva a fejlesztést.
 
-\subsubsection{ESP8266 ESP-01}
-Az ESP-01 valójában szintén egy mikrovezérlő. A projektemben WIFI modulként használtam fel, vagyis ez felel a vezetéknélküli kommunikációért. A fejlesztői kártyávan USART kommunikációs protokollon keresztük kommunikál. Áramellátását is az STM32 kártyától kapja.
+\subsubsection{ESP-01 (ESP8266)}
+Az \texttt{ESP-01} valójában szintén egy mikrovezérlő, de a projektemben WIFI modulként használtam fel, vagyis ez felel a vezetéknélküli kommunikációért. 802.11 b/g/n szabvánnyal rendelkezik, 2.4 GHz-es csatornát használ. Támogatja a WPA/WPA2-t, és tud működni Station és Access Point módban is.
+
+A fejlesztői kártyával USART kommunikációs protokollon keresztül kommunikál. A modul működtetéséhez az általa ismert AT parancsokat kell továbbítanunk. Áramellátását az STM32 kártyától kapja.
 
 \begin{figure}[ht]
 	\centering
@@ -295,29 +303,33 @@ Az ESP-01 valójában szintén egy mikrovezérlő. A projektemben WIFI modulkén
 \end{figure}	
 
 \subsubsection{MAX7219-4DM}
-A kijelző 4 db 8x8-as LED mátrixból áll, amely mögött 4 db MAX7219 LED meghajtó üzemel. Ezt az össze kaszkádolt kijelzőt készen rendeltem az internetről, mivel a tulajdonságai alapján teljesen megfelelt az elképzeléseimnek. A 4 db mátrix tökéletesen alkalmas egy digitális óra 4 számjegyének megjelenítésére, és a csúsztatott szöveg kijelzése is megoldható vele, hiszen a 4 mátrix megfelelő szélességű felületet biztosít a szavak kirajzolásához.
+A kijelző 4 db 8x8-as LED mátrixból áll, amely mögött 4 db MAX7219 LED meghajtó üzemel. Ezt az összekaszkádolt kijelzőt készen rendeltem az internetről, mivel a tulajdonságai alapján teljesen megfelelt az elképzeléseimnek. A 4 db mátrix tökéletesen alkalmas egy digitális óra 4 számjegyének megjelenítésére, és a csúsztatott szöveg kijelzése is megoldható vele, hiszen a 4 mátrix megfelelő szélességű felületet biztosít a szavak kirajzolásához.
+A kijelző működtetéséhez 5V kell. Ezt a tápegységtől kapja meg. A kijelzéshez szükséges jeleket a fejlesztőikártya 3 különböző GPIO portjától kapja meg.
 
 \begin{figure}[ht]
 	\centering
-	\includegraphics[width = 6cm]{images/matrix.jpg}
+	\includegraphics[width = 8cm]{images/matrix.jpg}
 	\caption{A kijelző és a LED meghajtó}
 	\label{fig:matrix}
 \end{figure}	
 
-\subsubsection{Mikro USB aljzat + Tápegység}
-A tápegység tulajdonságainak leírása
+\subsubsection{Micro USB aljzat + Tápegység}
+
+Az eszközön helyet kapott egy micro USB aljzat is, amelynek a GND és a VBUS kimeneti pinjeit használtam fel. A fejlesztői kártyához és a kijelzőhöz csatlakozik párhuzamosan.
 
 \begin{figure}[ht]
 	\centering
 	\includegraphics[width = 5cm]{images/dip5.jpg}
 	\caption{Micro USB aljzat}
 	\label{fig:dip5}
-\end{figure}	
+\end{figure}
+
+Az általam használt tápegység (\texttt{JX-005}) pedig 5V-ot és 2 ampert tud leadni.
 
 \subsection{A program}
 
 A programot az \textit{STMicroelectronics STM32CubeIDE 1.4.0}-val írtam.
-Az IDE által generált kódokon kívül a következő forrás állományokat hoztam létre:
+Az IDE által generált kódokon kívül a következő forrásállományokat hoztam létre:
 \begin{itemize}[noitemsep]
 	\item \texttt{max\_driver.c}
 	\item \texttt{max\_display.c}
@@ -330,7 +342,7 @@ Az IDE által generált kódokon kívül a következő forrás állományokat ho
 \subsubsection{Megjelenítés}
 
 A \texttt{max\_driver.c} tartalmazza az összes olyan metódust, amelyek a LED vezérlők működtetéséhez szükségesek.
-A LED vezérlő egységeknek bájtok formájában küldhetünk adatokat.
+A LED vezérlőegységeknek bájtok formájában küldhetünk adatokat.
 Egy bájt elküldése a következőképpen tehető meg:
 \begin{lstlisting}[style=CStyle]
 void write_byte (uint8_t byte){
@@ -352,7 +364,7 @@ A vezérlő konfigurálásához dedikált vezérlők állnak rendelkezésre. A k
 
 A $8\times 8$-as mátrix értékeit soronként adhatjuk meg a megfelelő bájtok beállításával. A sorok regisztercímei 1-8 ig terjednek.
 
-Mivel a kijelző LED vezérlők és mátrixok kaszkádolásából áll, így a soroknak elküldött értékek minden cellábban ugyan azok a LED-ek villannak fel. A megfelelő cella kiválasztásához meg kell adnunk a cella indexét. Az indexelés 0-tól kezdődik. Amíg el nem érjük a kívánt cellát, addig az előtte lévő cellákat a 0 című regiszter 0 értékének beállításával léphetjük át. Majd ha elértük a cellát, a megfelelő sorát elláthatjuk a bájt értékével. A maradék cellákat is a 0,0 értékkel kell ellátnunk. Ezt a műveletet a \texttt{void set\_byte\_on\_matrix(uint8\_t byte, uint8\_t row, uint8\_t column)} függvénnyel tehetjük meg.
+Mivel a kijelző LED vezérlők és mátrixok kaszkádolásából áll, így a soroknak elküldött értékek minden cellábban ugyan azok a LED-ek villannak fel. A megfelelő cella kiválasztásához meg kell adnunk a cella indexét. Az indexelés 0-tól kezdődik. Amíg el nem érjük a kívánt cellát, addig az előtte lévő cellákat a 0 című regiszter 0 értékének beállításával léphetjük át. Majd ha elértük a cellát, a megfelelő sorát elláthatjuk a bájt értékével. Ezután a maradék cellákat is a 0,0 értékkel kell ellátnunk. A műveletet a \texttt{void set\_byte\_on\_matrix(uint8\_t byte, uint8\_t row, uint8\_t column)} függvénnyel tehetjük meg.
 
 \bigskip
 
@@ -382,7 +394,7 @@ A \texttt{clock\_face.c} forrásállomány az óra számlapjának megjelenítés
 
 \subsubsection{Wifi kommunikáció}
 
-Az \texttt{uart\_handler.c} csupán azokat az UART kezelő függvényeket tartalmazza, amelyek a soros működésű UART kommunikációban használatosak. Ilyen soros működésre van szükség például az ESP-01 inicializálása során is, illetve az UART-on való küldés minden esetben soros működésű.
+Az \texttt{uart\_handler.c} csupán azokat az UART kezelő függvényeket tartalmazza, amelyek a soros működésű UART kommunikációban használatosak. Ilyen soros működésre van szükség például az ESP-01 inicializálása során is, illetve az UART-on való küldés is minden esetben soros működésű.
 
 \bigskip
 
@@ -399,6 +411,7 @@ Az inicializáló függvény visszatérési értéke a routertől kapott lokáli
 
 A megszakítások jelzésére a már ismertetett változók szolgálnak.
 
+Az eszköz működése során az UART kommunikáció is generál további megszakításokat.
 A programban a főciklusba lépés előtt az UART kommunikáció átvált asszinkron módra. Bejövő adat esetén karakterenként újjabb megszakítás generálódik. A megszakítás lekezelése után a kapott karaktert egy bufferben helyezem el, növelem a karakterszámláló értékét, majd újra elindítom az asszinkron UART figyelőt.
 Az \texttt{stm32f1xx\_it.c} UART megszakításkezelőjét a következőkkel egészítetem ki: 
 \begin{lstlisting}[style=CStyle]
